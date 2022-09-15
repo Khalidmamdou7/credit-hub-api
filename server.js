@@ -3,7 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const { initDriver } = require('./neo4j');
-const { authRouter } = require('./routes/auth');
+const authRouter = require('./routes/auth');
 
 dotenv.config();
 
