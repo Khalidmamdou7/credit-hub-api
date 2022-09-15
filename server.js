@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const { initDriver } = require('./neo4j');
+const { authRouter } = require('./routes/auth');
 
 dotenv.config();
 
@@ -20,6 +21,8 @@ initDriver(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD)
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
+
+app.use('/api/auth', authRouter);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
