@@ -37,6 +37,38 @@ const register = async (email, plainPassword, name) => {
     }
 }
 
+const login = async (email, plainPassword) => {
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (u:User {email: $email})
+                RETURN u`,
+                { email }
+            )
+        );
+
+        if (res.records.length === 0) {
+            throw new ValidationError('Email not found');
+        }
+
+        const user = res.records[0].get('u').properties;
+        const match = await compare(plainPassword, user.password);
+        if (!match) {
+            throw new ValidationError('Incorrect password');
+        }
+
+        const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET);
+        return { user, token };
+    }
+    finally {
+        await session.close();
+    }
+}
+    
+
 module.exports = {
-    register
+    register,
+    login
 }

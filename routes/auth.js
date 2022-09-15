@@ -7,7 +7,7 @@ authRouter.post('/login', async (req, res, next) => {
     try {
         const {email, password} = req.body;
         const output = await authService.login(email, password);
-        res.json(output);
+        res.json({email, "name": output.user.name, "token": output.token});
     } catch (e) {
         res.status(400).json({error: e.message});
     }
