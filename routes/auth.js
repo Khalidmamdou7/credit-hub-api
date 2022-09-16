@@ -7,9 +7,11 @@ authRouter.post('/login', async (req, res, next) => {
     try {
         const {email, password} = req.body;
         const output = await authService.login(email, password);
-        res.json({email, "name": output.user.name, "token": output.token});
+        res.json(output);
     } catch (e) {
         res.status(400).json({error: e.message});
+        console.log(e);
+        throw e;
     }
 });
 
@@ -17,9 +19,10 @@ authRouter.post('/register', async (req, res, next) => {
     try {
         const {email, password, name} = req.body;
         const output = await authService.register(email, password, name);
-        res.json({email, name, "token": output.token});
+        res.json(output);
     } catch (e) {
         res.status(400).json({message: e.message});
+        console.log(e);
     }
 });
 

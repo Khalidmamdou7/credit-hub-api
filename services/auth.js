@@ -23,9 +23,13 @@ const register = async (email, plainPassword, name) => {
             )
         );
         
-        const user = res.records[0].get('u').properties;
-        const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET);
-        return { user, token };
+        const user = res.records[0].get('u');
+        const { password, ...safeProperties } = user.properties
+        const token = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
+        return {
+            ...safeProperties,
+            token
+        };
 
     } catch (error) {
         if (error.code === 'Neo.ClientError.Schema.ConstraintValidationFailed') {
@@ -53,22 +57,42 @@ const login = async (email, plainPassword) => {
             throw new ValidationError('Email not found');
         }
 
-        const user = res.records[0].get('u').properties;
-        const match = await compare(plainPassword, user.password);
+        
+
+        const user = res.records[0].get('u');
+        const { password, ...safeProperties } = user.properties;
+        const match = await compare(plainPassword, password);
         if (!match) {
             throw new ValidationError('Incorrect password');
         }
-
-        const token = jwt.sign({ userId: user.userId }, process.env.JWT_SECRET);
-        return { user, token };
+        const token = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
+        return {
+            ...safeProperties,
+            token
+        };
     }
     finally {
         await session.close();
     }
 }
-    
+
+const userToClaims = (user) => {
+    const { name, userId } = user
+
+    return { sub: userId, userId, name, }
+}
+
+
+const claimsToUser = async (claims) => {
+    return {
+        ...claims,
+        userId: claims.sub,
+    }
+}
 
 module.exports = {
     register,
-    login
+    login,
+    userToClaims,
+    claimsToUser,
 }

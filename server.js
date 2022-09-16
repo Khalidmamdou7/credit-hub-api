@@ -2,12 +2,14 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const passport = require('passport');
 const { initDriver } = require('./neo4j');
 const authRouter = require('./routes/auth');
 
 dotenv.config();
 
 app.use(bodyParser.json());
+app.use(passport.initialize());
 
 // Connect to Neo4j and Verify Connectivity
 const {
