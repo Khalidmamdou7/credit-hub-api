@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
-const passport = require('passport');
+const passport = require('./passport/passport');
 const { initDriver } = require('./neo4j');
 const authRouter = require('./routes/auth');
 
@@ -20,7 +20,8 @@ const {
 initDriver(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD)
 
 // Routes
-app.get('/', (req, res) => {
+app.get('/', passport.authenticate('jwt', {session: false}), async (req, res) => {
+    console.log(req.user);
     res.send('Hello World!');
 });
 

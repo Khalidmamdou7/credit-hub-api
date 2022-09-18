@@ -41,7 +41,7 @@ const register = async (email, plainPassword, name) => {
     }
 }
 
-const login = async (email, plainPassword) => {
+const auth = async (email, plainPassword) => {
     driver = getDriver();
     const session = driver.session();
     try {
@@ -92,7 +92,7 @@ const claimsToUser = async (claims) => {
 
 module.exports = {
     register,
-    login,
+    auth,
     userToClaims,
     claimsToUser,
 }
