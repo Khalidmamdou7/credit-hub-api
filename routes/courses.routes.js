@@ -21,8 +21,8 @@ coursesRouter.get('/:code', async (req, res, next) => {
 });
 
 coursesRouter.post('/', async (req, res, next) => {
-    const { code, name } = req.body;
-    code = code.toUpperCase();
+    const { name } = req.body;
+    const code = req.body.code.toUpperCase();
     try {
         const course = await coursesService.createCourse(code, name);
         res.json(course);
