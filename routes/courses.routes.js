@@ -52,4 +52,16 @@ coursesRouter.delete('/:code', async (req, res, next) => {
     }
 });
 
+// search for courses by name or code
+coursesRouter.get('/search/:query', async (req, res, next) => {
+    let query = req.params.query;
+    try {
+        const courses = await coursesService.searchCourses(query);
+        res.json(courses);
+    } catch (error) {
+        next(error);
+    }
+});
+
+
 module.exports = coursesRouter;

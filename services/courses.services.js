@@ -117,10 +117,30 @@ const deleteCourse = async (code) => {
     }
 };
 
+const searchCourses = async (query) => {
+    query = query + '*';
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.readTransaction(tx =>
+            tx.run(`
+            CALL db.index.fulltext.queryNodes("namesAndCodes", $query) YIELD node
+            RETURN node LIMIT 10`, { query }
+            )
+        );
+        const courses = res.records.map(record => record.get('node').properties);
+        return courses;
+    } finally {
+        await session.close();
+    }
+};
+
+
 module.exports = {
     createCourse,
     getAllCourses,
     getCourse,
     updateCourse,
-    deleteCourse
+    deleteCourse,
+    searchCourses
 };
