@@ -1,6 +1,16 @@
 const { getDriver } = require('../neo4j');
+const ValidationError = require('../errors/validation.error');
+const NotFoundError = require('../errors/not-found.error');
+
+const validateCourseCode = (code) => {
+    const regex = /^[A-Z]{2,3}N[0-9]{3}$/;
+    if (!regex.test(code)) {
+        throw new ValidationError('Invalid course code');
+    }
+};
 
 const createCourse = async (code, name) => {
+    validateCourseCode(code);
     driver = getDriver();
     const session = driver.session();
     try {
@@ -44,6 +54,7 @@ const getAllCourses = async () => {
 };
 
 const getCourse = async (code) => {
+    validateCourseCode(code);
     driver = getDriver();
     const session = driver.session();
     try {
@@ -55,7 +66,7 @@ const getCourse = async (code) => {
             )
         );
         if (res.records.length === 0) {
-            throw new ValidationError('Course not found');
+            throw new NotFoundError('Course not found');
         }
         return res.records[0].get('c').properties;
     } finally {
@@ -64,6 +75,7 @@ const getCourse = async (code) => {
 };
 
 const updateCourse = async (code, name) => {
+    validateCourseCode(code);
     driver = getDriver();
     const session = driver.session();
     try {
@@ -76,7 +88,7 @@ const updateCourse = async (code, name) => {
             )
         );
         if (res.records.length === 0) {
-            throw new ValidationError('Course not found');
+            throw new NotFoundError('Course not found');
         }
         return res.records[0].get('c').properties;
     } finally {
@@ -85,6 +97,8 @@ const updateCourse = async (code, name) => {
 };
 
 const deleteCourse = async (code) => {
+    validateCourseCode(code);
+
     driver = getDriver();
     const session = driver.session();
     try {
@@ -96,7 +110,7 @@ const deleteCourse = async (code) => {
             )
         );
         if (res.records.length === 0) {
-            throw new ValidationError('Course not found');
+            throw new NotFoundError('Course not found');
         }
     } finally {
         await session.close();

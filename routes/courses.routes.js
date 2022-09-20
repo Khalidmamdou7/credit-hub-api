@@ -1,48 +1,54 @@
 const coursesRouter = require('express').Router();
 const coursesService = require('../services/courses.services');
 
-coursesRouter.get('/', async (req, res) => {
+coursesRouter.get('/', async (req, res, next) => {
     try {
         const courses = await coursesService.getAllCourses();
         res.json(courses);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        next(error);
     }
 });
 
-coursesRouter.get('/:code', async (req, res) => {
+coursesRouter.get('/:code', async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
     try {
-        const course = await coursesService.getCourse(req.params.code);
+        const course = await coursesService.getCourse(code);
         res.json(course);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        next(error);
     }
 });
 
-coursesRouter.post('/', async (req, res) => {
+coursesRouter.post('/', async (req, res, next) => {
+    const { code, name } = req.body;
+    code = code.toUpperCase();
     try {
-        const course = await coursesService.createCourse(req.body.code, req.body.name);
+        const course = await coursesService.createCourse(code, name);
         res.json(course);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        next(error);
     }
 });
 
-coursesRouter.put('/:code', async (req, res) => {
+coursesRouter.put('/:code', async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
+    const { name } = req.body;
     try {
-        const course = await coursesService.updateCourse(req.params.code, req.body.name);
+        const course = await coursesService.updateCourse(code, name);
         res.json(course);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        next(error);
     }
 });
 
-coursesRouter.delete('/:code', async (req, res) => {
+coursesRouter.delete('/:code', async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
     try {
-        await coursesService.deleteCourse(req.params.code);
+        await coursesService.deleteCourse(code);
         res.sendStatus(204);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        next(error);
     }
 });
 
