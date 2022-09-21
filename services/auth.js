@@ -8,6 +8,7 @@ const ValidationError = require('../errors/validation.error');
 const register = async (email, plainPassword, name) => {
     if (!validator.isEmail(email))
         throw new ValidationError('Invalid email');
+    email = validator.normalizeEmail(email);
     
     if (plainPassword.length < 8) 
         throw new ValidationError('Password must be at least 8 characters');
@@ -53,6 +54,7 @@ const register = async (email, plainPassword, name) => {
 const auth = async (email, plainPassword) => {
     if (!validator.isEmail(email))
         throw new ValidationError('Invalid email');
+    email = validator.normalizeEmail(email);
     
     if (plainPassword.length < 8)
         throw new ValidationError('Password must be at least 8 characters');

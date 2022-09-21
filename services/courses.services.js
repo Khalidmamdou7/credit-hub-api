@@ -11,6 +11,8 @@ const validateCourseCode = (code) => {
 
 const createCourse = async (code, name) => {
     validateCourseCode(code);
+    name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
+
     driver = getDriver();
     const session = driver.session();
     try {
@@ -33,8 +35,7 @@ const createCourse = async (code, name) => {
     } finally {
         await session.close();
     }
-}
-
+};
 
 const getAllCourses = async () => {
     driver = getDriver();
@@ -76,6 +77,9 @@ const getCourse = async (code) => {
 
 const updateCourse = async (code, name) => {
     validateCourseCode(code);
+    // sanitize name
+    name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
+
     driver = getDriver();
     const session = driver.session();
     try {
@@ -118,6 +122,9 @@ const deleteCourse = async (code) => {
 };
 
 const searchCourses = async (query) => {
+    // sanitize query
+    query = query.replace(/[^a-zA-Z0-9 ,-]/g, '');
+
     query = query + '*';
     driver = getDriver();
     const session = driver.session();
