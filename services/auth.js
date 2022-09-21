@@ -1,9 +1,18 @@
 const jwt = require('jsonwebtoken');
 const { hash, compare } = require('bcrypt');
 const { getDriver } = require('../neo4j');
+const validator = require('validator');
+const ValidationError = require('../errors/validation.error');
 
 
 const register = async (email, plainPassword, name) => {
+    if (!validator.isEmail(email))
+        throw new ValidationError('Invalid email');
+    
+    if (plainPassword.length < 8) 
+        throw new ValidationError('Password must be at least 8 characters');
+    
+
     const encrypted = await hash(plainPassword, parseInt(process.env.SALT_ROUNDS));
 
     driver = getDriver();
@@ -42,6 +51,12 @@ const register = async (email, plainPassword, name) => {
 }
 
 const auth = async (email, plainPassword) => {
+    if (!validator.isEmail(email))
+        throw new ValidationError('Invalid email');
+    
+    if (plainPassword.length < 8)
+        throw new ValidationError('Password must be at least 8 characters');
+
     driver = getDriver();
     const session = driver.session();
     try {
