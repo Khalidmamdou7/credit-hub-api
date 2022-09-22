@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const passport = require('./passport/passport');
 const { initDriver } = require('./neo4j');
+const cors = require('cors');
+
 const authRouter = require('./routes/auth');
 const coursesRouter = require('./routes/courses.routes');
 const errorMiddleware = require('./middleware/error.middleware');
@@ -12,6 +14,9 @@ dotenv.config();
 
 app.use(bodyParser.json());
 app.use(passport.initialize());
+app.use(cors({
+    origin: '*'
+}));
 
 // Connect to Neo4j and Verify Connectivity
 const {
