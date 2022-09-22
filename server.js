@@ -8,6 +8,8 @@ const cors = require('cors');
 
 const authRouter = require('./routes/auth');
 const coursesRouter = require('./routes/courses.routes');
+const timeslotsRouter = require('./routes/timeslots.routes');
+
 const errorMiddleware = require('./middleware/error.middleware');
 
 dotenv.config();
@@ -34,6 +36,7 @@ app.get('/', passport.authenticate('jwt', {session: false}), async (req, res) =>
 
 app.use('/api/auth', authRouter);
 app.use('/api/courses', coursesRouter);
+app.use('/api/timeslots', timeslotsRouter);
 
 app.use(errorMiddleware);
 
