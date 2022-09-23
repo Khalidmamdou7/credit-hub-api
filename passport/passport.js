@@ -14,8 +14,12 @@ const Neo4jStrategy = new LocalStrategy({
     session: false,          // Session support is not necessary
     passReqToCallback: true, // Passing the request to the callback allows us to use the open transaction
   }, async (req, email, password, done) => {
-    const user = await authService.auth(email, password)
-    done(null, user)
+    try {
+      const user = await authService.auth(email, password)
+      done(null, user);
+    } catch (err) {
+      return done(err);
+    }
   })
 
 const jwtStrategy = new JwtStrategy({

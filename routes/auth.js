@@ -14,8 +14,7 @@ authRouter.post('/register', async (req, res, next) => {
         const output = await authService.register(email, password, name);
         res.json(output);
     } catch (e) {
-        res.status(400).json({message: e.message});
-        console.log(e);
+        next(e);
     }
 });
 
