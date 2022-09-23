@@ -1,13 +1,8 @@
 const { getDriver } = require('../neo4j');
 const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
+const { validateCourseCode } = require('../utils/validation');
 
-const validateCourseCode = (code) => {
-    const regex = /^[A-Z]{2,3}N[0-9]{3}$/;
-    if (!regex.test(code)) {
-        throw new ValidationError('Invalid course code');
-    }
-};
 
 const createCourse = async (code, name) => {
     validateCourseCode(code);
