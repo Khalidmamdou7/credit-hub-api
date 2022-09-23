@@ -25,8 +25,11 @@ const options = {
         },
         servers: [
             {
-                url: 'http://localhost:5312/',
+                url: 'http://localhost:5312/', 'description': 'Local server'
             },
+            {
+                url: 'https://swap-courses-api.herokuapp.com/', 'description': 'Heroku server'
+            }
         ],
     },
     apis: ['./routes/*.js'],
