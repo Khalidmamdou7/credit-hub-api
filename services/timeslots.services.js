@@ -57,7 +57,7 @@ const getTimeslotsByCourseAndSemester = async (courseCode, semester) => {
         const res = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (c:Course {code: $courseCode})-[:OFFERED_AT]->(t:Timeslot)-[:OFFERED_IN]->(s:Semester {name: $semester})
-                RETURN t`,
+                RETURN t ORDER BY t.type, t.group`,
                 { courseCode, semester }
             )
         );
