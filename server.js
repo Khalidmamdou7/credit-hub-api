@@ -5,12 +5,36 @@ const dotenv = require('dotenv');
 const passport = require('./passport/passport');
 const { initDriver } = require('./neo4j');
 const cors = require('cors');
+const swaggerUI = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
 
 const authRouter = require('./routes/auth');
 const coursesRouter = require('./routes/courses.routes');
 const errorMiddleware = require('./middleware/error.middleware');
 
 dotenv.config();
+
+// Swagger
+const options = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Swap Courses API',
+            version: '1.0.0',
+            description: 'A simple Express API for Swap Courses',
+        },
+        servers: [
+            {
+                url: 'http://localhost:5312/',
+            },
+        ],
+    },
+    apis: ['./routes/*.js'],
+};
+
+const specs = swaggerJsDoc(options);
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
 
 app.use(bodyParser.json());
 app.use(passport.initialize());

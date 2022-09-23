@@ -29,6 +29,8 @@
     "passport-anonymous": "^1.0.1",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
+    "swagger-jsdoc": "^6.2.5",
+    "swagger-ui-express": "^4.5.0",
     "validator": "^13.7.0"
   }
 }
