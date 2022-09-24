@@ -52,7 +52,17 @@ const passport = require('passport');
  *                      schema:
  *                          type: array
  *                          items:
- *                              $ref: '#/components/schemas/SwapRequest'
+ *                              type: object
+ *                              required:
+ *                                  - id
+ *                                  - status
+ *                              properties:
+ *                                  id:
+ *                                      type: string
+ *                                      description: The auto-generated id of the swap request
+ *                                  status:
+ *                                      type: string
+ *                                      description: The status of the swap request
  *          401:
  *              description: Unauthorized (token not valid)
  *          500:
