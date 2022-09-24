@@ -1,5 +1,5 @@
 const swapRequestsRouter = require('express').Router();
-const swapRequestsService = require('../services/swap-requests.service');
+const swapRequestsService = require('../services/swap-requests.services');
 
 const passport = require('passport');
 
