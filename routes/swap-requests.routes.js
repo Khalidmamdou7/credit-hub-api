@@ -216,7 +216,7 @@ swapRequestsRouter.post('/', passport.authenticate('jwt', {session: false}), asy
  *              content:
  *                  application/json:
  *                      schema:
- *                          $ref: '#/components/schemas/SwapRequest'
+ *                          $ref: '#/components/schemas/SwapRequestRequest'
  *          400:
  *              description: Bad request
  *          401:
