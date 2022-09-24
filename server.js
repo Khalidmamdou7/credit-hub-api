@@ -10,6 +10,8 @@ const swaggerJsDoc = require('swagger-jsdoc');
 
 const authRouter = require('./routes/auth');
 const coursesRouter = require('./routes/courses.routes');
+const swapRequestsRouter = require('./routes/swap-requests.routes');
+
 const errorMiddleware = require('./middleware/error.middleware');
 
 dotenv.config();
@@ -61,6 +63,7 @@ app.get('/', passport.authenticate('jwt', {session: false}), async (req, res) =>
 
 app.use('/api/auth', authRouter);
 app.use('/api/courses', coursesRouter);
+app.use('/api/swap-requests', swapRequestsRouter);
 
 app.use(errorMiddleware);
 
