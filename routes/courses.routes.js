@@ -93,8 +93,8 @@ const timeslotsService = require('../services/timeslots.services');
  *      summary: Get the course with the specified course code
  *      tags: [Courses]
  *      parameters:
- *          in: path
- *          name: courseCode
+ *          - in: path
+ *            name: courseCode
  *      schema:
  *          type: string
  *          required: true
@@ -117,18 +117,18 @@ const timeslotsService = require('../services/timeslots.services');
  *      summary: Update the course with the specified course code
  *      tags: [Courses]
  *      parameters:
- *          in: path
- *          name: courseCode
+ *          - in: path
+ *            name: courseCode
  *      schema:
  *          type: string
  *          required: true
  *          description: The course code
  *      requestBody:
  *          required: true
- *      content:
- *          application/json:
- *              schema:
- *                  $ref: '#/components/schemas/Course'
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/Course'
  *      responses:
  *          200:
  *              description: The course was updated
@@ -146,8 +146,8 @@ const timeslotsService = require('../services/timeslots.services');
  *      summary: Remove the course with the specified course code
  *      tags: [Courses]
  *      parameters:
- *          in: path
- *          name: courseCode
+ *          - in: path
+ *            name: courseCode
  *      schema:
  *          type: string
  *          required: true
@@ -222,8 +222,8 @@ coursesRouter.delete('/:code', async (req, res, next) => {
  *      summary: Search for courses by course code or course name
  *      tags: [Courses]
  *      parameters:
- *         in: path
- *         name: query
+ *          - in: path
+ *            name: query
  *      schema:
  *          type: string
  *          required: true

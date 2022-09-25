@@ -7,16 +7,36 @@ const passport = require('passport');
  * @swagger
  * components:
  *  schemas:
- *      SwapRequest:
+ *      SwapRequestTimeslot:
+ *          type: object
+ *          properties:
+ *              type:
+ *                  type: string
+ *                  enum: [lec, tut]
+ *              group:
+ *                  type: string
+ *              day:
+ *                  type: string
+ *                  enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+ *              startTime:
+ *                  type: string
+ *                  format: time
+ *              endTime:
+ *                  type: string
+ *                  format: time
+ *              course:
+ *                  type: object
+ *                  properties:
+ *                      code:
+ *                          type: string
+ *                      name:
+ *                        type: string
+ *      SwapRequestRequest:
  *          type: object
  *          required:
- *              - id
  *              - wantedTimeslots
  *              - offeredTimeslot
  *          properties:
- *              id:
- *                  type: string
- *                  description: The auto-generated id of the swap request
  *              wantedTimeslots:
  *                  type: array
  *                  items:
@@ -26,9 +46,67 @@ const passport = require('passport');
  *                  type: string
  *                  description: The id of the timeslot that the user is offering to swap
  *          example:
- *              id: 1
  *              wantedTimeslots: ["12dasd1312-1dasd2131", "dsdsa-sadffds-sfdads-dsfsds"]
  *              offeredTimeslots: "23878329das0-23878329das0"
+ *      SwapRequestResponse:
+ *          type: object
+ *          required:
+ *              - id
+ *              - wantedTimeslots
+ *              - offeredTimeslots
+ *              - status
+ *              - createdAt
+ *              - updatedAt
+ *          properties:
+ *              id:
+ *                  type: string
+ *              wantedTimeslots:
+ *                  type: array
+ *                  items:
+ *                      type:
+ *                          $ref: '#/components/schemas/SwapRequestTimeslot'
+ *              offeredTimeslots:
+ *                  type: array
+ *                  items:
+ *                      type:
+ *                          $ref: '#/components/schemas/SwapRequestTimeslot'
+ *              status:
+ *                  type: string
+ *              createdAt:
+ *                  type: object
+ *                  properties:
+ *                      $date:
+ *                          type: number
+ *              updatedAt:
+ *                  type: object
+ *                  properties:
+ *                      $date:
+ *                          type: number
+ *          example:
+ *              id: "12dasd1312-1dasd2131"
+ *              wantedTimeslots:
+ *                  type: "lec"
+ *                  group: "1"
+ *                  day: "Monday"
+ *                  startTime: "9:00"
+ *                  endTime: "10:00"
+ *                  course:
+ *                      code: "CMPN203"
+ *                      name: "Software Engineering"
+ *              offeredTimeslots:
+ *                  type: "lec"
+ *                  group: "2"
+ *                  day: "Sunday"
+ *                  startTime: "9:00"
+ *                  endTime: "10:00"
+ *                  course:
+ *                      code: "CMPN203"
+ *                      name: "Software Engineering"
+ *              status: "pending"
+ *              createdAt:
+ *                  $date: 1611234567890
+ *              updatedAt:
+ *                  $date: 1611234567890
  */
 
 
@@ -52,17 +130,7 @@ const passport = require('passport');
  *                      schema:
  *                          type: array
  *                          items:
- *                              type: object
- *                              required:
- *                                  - id
- *                                  - status
- *                              properties:
- *                                  id:
- *                                      type: string
- *                                      description: The auto-generated id of the swap request
- *                                  status:
- *                                      type: string
- *                                      description: The status of the swap request
+ *                              $ref: '#/components/schemas/SwapRequestResponse'
  *          401:
  *              description: Unauthorized (token not valid)
  *          500:
@@ -106,7 +174,7 @@ swapRequestsRouter.get('/', passport.authenticate('jwt', {session: false}), asyn
  *              description: Bearer token
  *          - in: body
  *            schema:
- *              $ref: '#/components/schemas/SwapRequest'
+ *              $ref: '#/components/schemas/SwapRequestRequest'
  */
 
 swapRequestsRouter.post('/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
@@ -141,14 +209,14 @@ swapRequestsRouter.post('/', passport.authenticate('jwt', {session: false}), asy
  *              description: The swap request id
  *          - in: body
  *            schema:
- *              $ref: '#/components/schemas/SwapRequest'
+ *              $ref: '#/components/schemas/SwapRequestRequest'
  *      responses:
  *          200:
  *              description: Success
  *              content:
  *                  application/json:
  *                      schema:
- *                          $ref: '#/components/schemas/SwapRequest'
+ *                          $ref: '#/components/schemas/SwapRequestRequest'
  *          400:
  *              description: Bad request
  *          401:
