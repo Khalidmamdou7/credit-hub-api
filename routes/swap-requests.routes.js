@@ -42,18 +42,18 @@ const passport = require('passport');
  *                  items:
  *                      type: string
  *                      description: The ids of the timeslots the user wants to swap
- *              offeredTimeslots:
+ *              offeredTimeslot:
  *                  type: string
  *                  description: The id of the timeslot that the user is offering to swap
  *          example:
  *              wantedTimeslots: ["12dasd1312-1dasd2131", "dsdsa-sadffds-sfdads-dsfsds"]
- *              offeredTimeslots: "23878329das0-23878329das0"
+ *              offeredTimeslot: "23878329das0-23878329das0"
  *      SwapRequestResponse:
  *          type: object
  *          required:
  *              - id
  *              - wantedTimeslots
- *              - offeredTimeslots
+ *              - offeredTimeslot
  *              - status
  *              - createdAt
  *              - updatedAt
@@ -65,11 +65,9 @@ const passport = require('passport');
  *                  items:
  *                      type:
  *                          $ref: '#/components/schemas/SwapRequestTimeslot'
- *              offeredTimeslots:
- *                  type: array
- *                  items:
- *                      type:
- *                          $ref: '#/components/schemas/SwapRequestTimeslot'
+ *              offeredTimeslot:
+ *                  type:
+ *                      $ref: '#/components/schemas/SwapRequestTimeslot'
  *              status:
  *                  type: string
  *              createdAt:
@@ -93,7 +91,7 @@ const passport = require('passport');
  *                  course:
  *                      code: "CMPN203"
  *                      name: "Software Engineering"
- *              offeredTimeslots:
+ *              offeredTimeslot:
  *                  type: "lec"
  *                  group: "2"
  *                  day: "Sunday"
