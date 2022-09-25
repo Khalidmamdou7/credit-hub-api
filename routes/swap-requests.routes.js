@@ -12,7 +12,7 @@ const passport = require('passport');
  *          required:
  *              - id
  *              - wantedTimeslots
- *              - offeredTimeslots
+ *              - offeredTimeslot
  *          properties:
  *              id:
  *                  type: string
@@ -21,14 +21,14 @@ const passport = require('passport');
  *                  type: array
  *                  items:
  *                      type: string
+ *                      description: The ids of the timeslots the user wants to swap
  *              offeredTimeslots:
- *                  type: array
- *                  items:
- *                      type: string
+ *                  type: string
+ *                  description: The id of the timeslot that the user is offering to swap
  *          example:
  *              id: 1
- *              wantedTimeslots: ["12dasd1312-1dasd2131", "23878329das0-23878329das0"]
- *              offeredTimeslots: ["23878329das0-23878329das0", "12dasd1312-1dasd2131"]
+ *              wantedTimeslots: ["12dasd1312-1dasd2131", "dsdsa-sadffds-sfdads-dsfsds"]
+ *              offeredTimeslots: "23878329das0-23878329das0"
  */
 
 

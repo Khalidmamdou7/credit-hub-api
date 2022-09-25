@@ -14,7 +14,7 @@ const getSwapRequests = async (user) => {
                 MATCH (sr)-[:OFFERS]->(ot:Timeslot)
                 MATCH (wt)<-[:OFFERED_AT]-(wc:Course)
                 MATCH (ot)<-[:OFFERED_AT]-(oc:Course)
-                RETURN sr, wt, ot, wc, oc`,
+                RETURN sr, wt, ot, wc, oc ORDER BY sr.createdAt DESC`,
                 { userId: user.userId }
         ));
         return res.records.map(record => {
@@ -32,39 +32,53 @@ const getSwapRequests = async (user) => {
 
 const createSwapRequest = async (user, timeslot) => {
     const wantedTimeslots = timeslot.wantedTimeslots || [];
-    const offeredTimeslots = timeslot.offeredTimeslots || [];
+    const offeredTimeslot = timeslot.offeredTimeslot || "";
     const driver = getDriver();
     const session = driver.session();
     try {
-        const res = await session.writeTransaction(tx =>
+        // validate that the user is not trying to swap a timeslot with itself
+        if (wantedTimeslots.includes(offeredTimeslot)) {
+            throw new ValidationError('Cannot swap a timeslot with itself');
+        }
+        
+        const res2 = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (t:Timeslot)
+                WHERE t.id IN $wantedTimeslotIds
+                RETURN t`,
+                { wantedTimeslotIds: wantedTimeslots }
+        ));
+        if (res2.records.length !== wantedTimeslots.length) {
+            throw new NotFoundError('One or more wanted timeslots not found');
+        }
+        // create the swap request
+        const res3 = await session.writeTransaction(tx =>
             tx.run(
                 `MATCH (u:User {userId: $userId})
-                MATCH (wantedTimeslots:Timeslot) WHERE wantedTimeslots.id IN $wantedTimeslots
-                MATCH (offeredTimeslots:Timeslot) WHERE offeredTimeslots.id IN $offeredTimeslots
+                MATCH (ot:Timeslot)
+                WHERE ot.id = $offeredTimeslotId
                 CREATE (sr:SwapRequest 
-                    {swapRequestId: randomUuid(), status: "pending", createdAt: datetime(), updatedAt: datetime()})
-                CREATE (u)-[r:REQUESTED]->(sr)
-                CREATE (sr)-[w:WANTS]->(wantedTimeslots)
-                CREATE (sr)-[o:OFFERS]->(offeredTimeslots)
-                RETURN sr, r, w, o`,
-                { userId: user.userId, wantedTimeslots, offeredTimeslots }
-            )
-        );
-        
-        if (res.records.length === 0) {
-            throw new ValidationError('Invalid timeslots');
-        }
-        return res.records[0].get('sr').properties;
-    } finally {
+                    {id: randomUUID(), status: 'pending', createdAt: datetime(), updatedAt: datetime()})
+                CREATE (u)-[:REQUESTED]->(sr)
+                CREATE (sr)-[:OFFERS]->(t)
+                WITH sr
+                MATCH (wt:Timeslot)
+                WHERE wt.id IN $wantedTimeslotIds
+                CREATE (sr)-[:WANTS]->(t)
+                RETURN sr`,
+                { userId: user.userId, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
+        ));
+        const sr = res3.records[0].get('sr').properties;
+        return sr;
+    }
+    finally {
         await session.close();
     }
 }
 
-
-
 const updateSwapRequest = async (user, timeslotId, timeslot) => {
     const wantedTimeslots = timeslot.wantedTimeslots || [];
-    const offeredTimeslots = timeslot.offeredTimeslots || [];
+    const offeredTimeslot = timeslot.offeredTimeslot || "";
     const driver = getDriver();
     const session = driver.session();
     try {
@@ -72,14 +86,14 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
             tx.run(
                 `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {swapRequestId: $swapRequestId})
                 MATCH (wantedTimeslots:Timeslot) WHERE wantedTimeslots.id IN $wantedTimeslots
-                MATCH (offeredTimeslots:Timeslot) WHERE offeredTimeslots.id IN $offeredTimeslots
+                MATCH (offeredTimeslot:Timeslot) WHERE offeredTimeslot.id = $offeredTimeslot
                 SET sr.updatedAt = datetime()
                 DELETE sr-[w:WANTS]->()
                 DELETE sr-[o:OFFERS]->()
                 CREATE (sr)-[w:WANTS]->(wantedTimeslots)
-                CREATE (sr)-[o:OFFERS]->(offeredTimeslots)
+                CREATE (sr)-[o:OFFERS]->(offeredTimeslot)
                 RETURN sr, w, o`,
-                { userId: user.userId, swapRequestId: timeslotId, wantedTimeslots, offeredTimeslots }
+                { userId: user.userId, swapRequestId: timeslotId, wantedTimeslots, offeredTimeslot }
             )
         );
         return res.records[0].get('sr').properties;
