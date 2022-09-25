@@ -68,6 +68,9 @@ const createSwapRequest = async (user, timeslot) => {
                 RETURN sr`,
                 { userId: user.userId, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
         ));
+        if (res3.records.length === 0) {
+            throw new NotFoundError('Offered timeslot not found');
+        }
         const sr = res3.records[0].get('sr').properties;
         return sr;
     }
