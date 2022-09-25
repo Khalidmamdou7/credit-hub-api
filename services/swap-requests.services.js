@@ -2,33 +2,6 @@ const NotFoundError = require('../errors/not-found.error');
 const ValidationError = require('../errors/validation.error');
 const { getDriver } = require('../neo4j');
 
-const getSwapRequests = async (user) => {
-    const driver = getDriver();
-    const session = driver.session();
-    try {
-        // get all swap requests and their wanted and offered timeslots and the courses they belong to
-        const res = await session.readTransaction(tx =>
-            tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest)
-                MATCH (sr)-[:WANTS]->(wt:Timeslot)
-                MATCH (sr)-[:OFFERS]->(ot:Timeslot)
-                MATCH (wt)<-[:OFFERED_AT]-(wc:Course)
-                MATCH (ot)<-[:OFFERED_AT]-(oc:Course)
-                RETURN sr, wt, ot, wc, oc ORDER BY sr.createdAt DESC`,
-                { userId: user.userId }
-        ));
-        return res.records.map(record => {
-            const sr = record.get('sr').properties;
-            sr.wantedTimeslot = record.get('wt').properties;
-            sr.offeredTimeslot = record.get('ot').properties;
-            sr.wantedTimeslot.course = record.get('wc').properties;
-            sr.offeredTimeslot.course = record.get('oc').properties;
-            return sr;
-        });
-    } finally {
-        await session.close();
-    }
-}
 
 const createSwapRequest = async (user, timeslot) => {
     const wantedTimeslots = timeslot.wantedTimeslots || [];
@@ -60,12 +33,12 @@ const createSwapRequest = async (user, timeslot) => {
                 CREATE (sr:SwapRequest 
                     {id: randomUUID(), status: 'pending', createdAt: datetime(), updatedAt: datetime()})
                 CREATE (u)-[:REQUESTED]->(sr)
-                CREATE (sr)-[:OFFERS]->(t)
-                WITH sr
+                CREATE (sr)-[:OFFERS]->(ot)
+                WITH sr, ot
                 MATCH (wt:Timeslot)
                 WHERE wt.id IN $wantedTimeslotIds
-                CREATE (sr)-[:WANTS]->(t)
-                RETURN sr`,
+                CREATE (sr)-[:WANTS]->(wt)
+                RETURN sr, ot, wt`,
                 { userId: user.userId, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
         ));
         if (res3.records.length === 0) {
@@ -73,6 +46,43 @@ const createSwapRequest = async (user, timeslot) => {
         }
         const sr = res3.records[0].get('sr').properties;
         return sr;
+    }
+    finally {
+        await session.close();
+    }
+}
+
+const getSwapRequests = async (user) => {
+    const driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest)
+                MATCH (sr)-[:OFFERS]->(ot:Timeslot)
+                MATCH (sr)-[:WANTS]->(wt:Timeslot)
+                RETURN sr, ot, wt`,
+                { userId: user.userId }
+        ));
+        // for each swap request, get the offered and wanted timeslots. if there are duplicates swap requests,
+        // then the offered and wanted timeslots will be duplicated as well. so we need to group them by swap request id
+        const swapRequests = {};
+        res.records.forEach(record => {
+            const sr = record.get('sr').properties;
+            const ot = record.get('ot').properties;
+            const wt = record.get('wt').properties;
+            if (!swapRequests[sr.id]) {
+                swapRequests[sr.id] = {
+                    ...sr,
+                    offeredTimeslot: ot,
+                    wantedTimeslots: [wt]
+                };
+            }
+            else {
+                swapRequests[sr.id].wantedTimeslots.push(wt);
+            }
+        });
+        return Object.values(swapRequests);
     }
     finally {
         await session.close();
