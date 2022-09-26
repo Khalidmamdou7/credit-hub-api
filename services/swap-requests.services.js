@@ -11,6 +11,8 @@ const createSwapRequest = async (user, timeslot) => {
     try {
         // validate that the user is not trying to swap a timeslot with itself
         if (wantedTimeslots.includes(offeredTimeslot)) {
+            console.log('offeredTimeslot', offeredTimeslot);
+            console.log('wantedTimeslots', wantedTimeslots);
             throw new ValidationError('Cannot swap a timeslot with itself');
         }
         
@@ -22,6 +24,7 @@ const createSwapRequest = async (user, timeslot) => {
                 { wantedTimeslotIds: wantedTimeslots }
         ));
         if (res2.records.length !== wantedTimeslots.length) {
+            console.log('wantedTimeslots', wantedTimeslots);
             throw new NotFoundError('One or more wanted timeslots not found');
         }
         // create the swap request
@@ -42,6 +45,7 @@ const createSwapRequest = async (user, timeslot) => {
                 { userId: user.userId, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
         ));
         if (res3.records.length === 0) {
+            console.log('offeredTimeslot', offeredTimeslot);
             throw new NotFoundError('Offered timeslot not found');
         }
         const sr = res3.records[0].get('sr').properties;
