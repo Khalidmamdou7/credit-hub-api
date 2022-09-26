@@ -6,6 +6,11 @@ const passport = require('passport');
 /**
  * @swagger
  * components:
+ *  securitySchemes:
+ *      BearerAuth:
+ *          type: http
+ *          scheme: bearer
+ *          bearerFormat: JWT
  *  schemas:
  *      SwapRequestTimeslot:
  *          type: object
@@ -113,13 +118,8 @@ const passport = require('passport');
  * /api/swap-requests:
  *  get:
  *      description: Get all swap requests for a logged in user (token required)
- *      parameters:
- *          - in: header
- *            name: Authorization
- *            schema:
- *              type: string
- *              required: true
- *              description: Bearer token
+ *      security:
+ *          - BearerAuth: []
  *      responses:
  *          200:
  *              description: Success
@@ -163,13 +163,9 @@ swapRequestsRouter.get('/', passport.authenticate('jwt', {session: false}), asyn
  *              description: Internal server error
  *      tags:
  *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
  *      parameters:
- *          - in: header
- *            name: Authorization
- *            schema:
- *              type: string
- *              required: true
- *              description: Bearer token
  *          - in: body
  *            schema:
  *              $ref: '#/components/schemas/SwapRequestRequest'
@@ -192,13 +188,9 @@ swapRequestsRouter.post('/', passport.authenticate('jwt', {session: false}), asy
  *      description: Update a swap request
  *      tags:
  *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
  *      parameters:
- *          - in: header
- *            name: Authorization
- *            schema:
- *              type: string
- *              required: true
- *              description: Bearer token
  *          - in: path
  *            name: id
  *            schema:
@@ -242,13 +234,9 @@ swapRequestsRouter.put('/:id', passport.authenticate('jwt', {session: false}), a
  *      description: Delete a swap request
  *      tags:
  *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
  *      parameters:
- *          - in: header
- *            name: Authorization
- *            schema:
- *              type: string
- *              required: true
- *              description: Bearer token
  *          - in: path
  *            name: id
  *            schema:
