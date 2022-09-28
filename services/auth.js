@@ -3,7 +3,7 @@ const { hash, compare } = require('bcrypt');
 const { getDriver } = require('../neo4j');
 const validator = require('validator');
 const ValidationError = require('../errors/validation.error');
-const {sendEmail} = require('../utils/utils');
+const {sendConfirmationEmail} = require('../utils/utils');
 const NotFoundError = require('../errors/not-found.error');
 
 
@@ -41,10 +41,7 @@ const register = async (email, plainPassword, name) => {
         const token = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
         const { userId } = user.properties;
         
-        // send confirmation email
-        const subject = 'Confirm your email';
-        const text = `Please click on the following link to confirm your email: http://${process.env.DOMAIN}/api/auth/confirm/${userId}/${token}`;
-        sendEmail(email, subject, text);
+        sendConfirmationEmail(email, userId, token);
         
         return {
             message: 'Please check your email to confirm your account'
@@ -118,15 +115,16 @@ const resendConfirmationEmail = async (email) => {
         if (res.records.length === 0) {
             throw new ValidationError('Email not found');
         }
+        if (res.records[0].get('u').properties.active) {
+            throw new ValidationError('Email already confirmed');
+        }
 
         const user = res.records[0].get('u');
         const { password, ...safeProperties } = user.properties
         const token = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
         const { userId } = user.properties;
 
-        const subject = 'Confirm your email';
-        const text = `Please click on the following link to confirm your email: http://${process.env.DOMAIN}/api/auth/confirm/${userId}/${token}`;
-        sendEmail(email, subject, text);
+        sendConfirmationEmail(email, userId, token);
 
         return {
             message: 'Please check your email to confirm your account'
