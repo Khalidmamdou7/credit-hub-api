@@ -265,5 +265,146 @@ swapRequestsRouter.delete('/:id', passport.authenticate('jwt', {session: false})
     }
 });
 
+/**
+ * @swagger
+ * /api/swap-requests/{id}/agree:
+ *  post:
+ *      description: Agree to a swap request
+ *      tags:
+ *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: id
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The user swap request id
+ *          - in: body
+ *            name: matchedSwapRequestId
+ *            schema:
+ *              type: object
+ *              properties:
+ *                  matchedSwapRequestId:
+ *                      type: string
+ *                      required: true
+ *                      description: The matched swap request id
+ *              example:
+ *                  matchedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
+ *      responses:
+ *          200:
+ *              description: Success
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/SwapRequestResponse'
+ *          400:
+ *              description: Bad request
+ *          401:
+ *              description: Unauthorized (token not valid)
+ *          404:
+ *              description: Not found
+ *          500:
+ *              description: Internal server error
+ */
+
+swapRequestsRouter.post('/:id/agree/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const mySwapRequestId = req.params.id;
+    const {matchedSwapRequestId} = req.body;
+    try {
+        const swapRequest = await swapRequestsService.agreeSwapRequest(req.user, mySwapRequestId, matchedSwapRequestId);
+        res.json(swapRequest);
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * @swagger
+ * /api/swap-requests/{id}/disagree:
+ *  post:
+ *      description: Disagree to a swap request
+ *      tags:
+ *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: id
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The user swap request id
+ *          - in: body
+ *            name: rejectedSwapRequestId
+ *            schema:
+ *              type: object
+ *              properties:
+ *                  rejectedSwapRequestId:
+ *                      type: string
+ *                      required: true
+ *                      description: The rejected swap request id
+ *              example:
+ *                  rejectedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
+ *      responses:
+ *          200:
+ *              description: Success
+ *          401:
+ *              description: Unauthorized (token not valid)
+ *          404:
+ *              description: Not found
+ *          500:
+ *              description: Internal server error
+ */
+
+swapRequestsRouter.post('/:id/disagree/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const mySwapRequestId = req.params.id;
+    const {rejectedSwapRequestId} = req.body;
+    try {
+        const swapRequest = await swapRequestsService.disagreeToSwapRequest(req.user, mySwapRequestId, rejectedSwapRequestId);
+        res.json(swapRequest);
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * @swagger
+ * /api/swap-requests/courses/{courseCode}:
+ *  get:
+ *      description: Get all swap requests for a course
+ *      tags:
+ *          - Swap Requests
+ *      parameters:
+ *          - in: path
+ *            name: courseCode
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course code
+ *      responses:
+ *          200:
+ *              description: Success
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/SwapRequestResponse'
+ *          500:
+ *              description: Internal server error
+ *          404:
+ *              description: Not found
+ *          422:
+ *              description: Unprocessable entity
+ */
+
+swapRequestsRouter.get('/courses/:courseCode', async (req, res, next) => {
+    try {
+        const swapRequests = await swapRequestsService.getSwapRequestsByCourse(req.params.courseCode);
+        res.json(swapRequests);
+    } catch (err) {
+        next(err);
+    }
+});
 
 module.exports = swapRequestsRouter;
