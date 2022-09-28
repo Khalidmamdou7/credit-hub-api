@@ -62,20 +62,25 @@ const authService = require('../services/auth');
  *      description: Login a user
  *      tags:
  *          - auth
- *      parameters:
- *          - in: body
- *            name: user
- *            description: The user to login 
- *            schema:
- *              type: object
- *              required:
- *                  - email
- *                  - password
- *              properties:
- *                  email:
- *                      type: string
- *                  password:
- *                      type: string
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - email
+ *                          - password
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                              description: The user's email
+ *                          password:
+ *                              type: string
+ *                              description: The user's password
+ *                      example:
+ *                          email: "khaled.fadel01@eng-st.cu.edu.eg"
+ *                          password: "12345678"
  *      responses:
  *          200:
  *              description: The user was logged in successfully
@@ -104,12 +109,12 @@ authRouter.post('/login', passport.authenticate('local', {session: false}), asyn
  *      description: Register a user
  *      tags:
  *          - auth
- *      parameters:
- *          - in: body
- *            name: user
- *            description: The user to register
- *            schema:
- *              $ref: '#/components/schemas/UserRegisterRequest'
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/UserRegisterRequest'
  *      responses:
  *          200:
  *              description: The user was registered successfully
@@ -132,5 +137,84 @@ authRouter.post('/register', async (req, res, next) => {
         next(e);
     }
 });
+
+/**
+ * @swagger
+ * /api/auth/confirm/{userId}/{token}:
+ *  get:
+ *      description: Confirm a user's email
+ *      tags:
+ *          - auth
+ *      parameters:
+ *          - in: path
+ *            name: userId
+ *            description: The user's id
+ *            schema:
+ *              type: string
+ *          - in: path
+ *            name: token
+ *            description: The user's token
+ *            schema:
+ *              type: string
+ *      responses:
+ *          200:
+ *              description: The user's email was confirmed successfully
+ *          404:
+ *              description: User not found
+ *          422:
+ *              description: Unprocessable entity (invalid token)
+ *          500:
+ *              description: Internal server error
+ */
+
+authRouter.get('/confirm/:userId/:token', async (req, res, next) => {
+    try {
+        const {userId, token} = req.params;
+        const output = await authService.confirmEmail(userId, token);
+        res.json(output);
+    } catch (e) {
+        next(e);
+    }
+});
+
+/**
+ * @swagger
+ * /api/auth/resend-confirmation-email:
+ *  post:
+ *      description: Resend a user's confirmation email
+ *      tags:
+ *          - auth
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - email
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                      example:
+ *                          email: "khalidmamdou7@gmail.com"
+ *      responses:
+ *          200:
+ *              description: The confirmation email was sent successfully
+ *          404:
+ *              description: User not found
+ *          500:
+ *              description: Internal server error
+ */
+
+authRouter.post('/resend-confirmation-email', async (req, res, next) => {
+    try {
+        const {email} = req.body;
+        const output = await authService.resendConfirmationEmail(email);
+        res.json(output);
+    } catch (e) {
+        next(e);
+    }
+});
+
 
 module.exports = authRouter;
