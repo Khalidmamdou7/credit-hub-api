@@ -59,7 +59,34 @@ const sendConfirmationEmail = async (email, userId, token) => {
 
 };
 
+// send a notification email to the user that a match has been found for his swap request
+const sendMatchFoundEmail = async (email) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Match found',
+            html: `
+            <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
+                <h1 style="text-align: center; color: #4d4d4d;">Match found</h1>
+                <p style="text-align: center; color: #4d4d4d;">A match has been found for your swap request</p>
+                <p style="text-align: center; color: #4d4d4d;">You can view the match on your <a href="http://${process.env.CLIENT_URL}/dashboard" style="text-decoration: none; color: #4d4d4d;">dashboard</a></p>
+                <br>
+                <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
+                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>  
+            </div>
+            `
+        };
+        await transporter.sendMail(mailOptions);
+        console.log('Email sent');
+    } catch (error) {
+        console.log("Error sending email: ", error);
+    }
+};
+
+
 module.exports = {
     sendEmail,
-    sendConfirmationEmail
+    sendConfirmationEmail,
+    sendMatchFoundEmail
 };

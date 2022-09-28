@@ -1,6 +1,7 @@
 const NotFoundError = require('../errors/not-found.error');
 const ValidationError = require('../errors/validation.error');
 const { getDriver } = require('../neo4j');
+const { sendMatchFoundEmail } = require('../utils/utils');
 
 
 const createSwapRequest = async (user, timeslot) => {
@@ -101,6 +102,7 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
         const sr = record.get('sr').properties;
         const sr2 = record.get('sr2').properties;
         const u2 = record.get('u2').properties;
+        sendMatchFoundEmail(u2.email);
         return {
             ...sr,
             matchedSwapRequest: sr2,
