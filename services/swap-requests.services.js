@@ -298,6 +298,42 @@ const disagreeToSwapRequest = async (user, swapRequestId, rejectedSwapRequestId)
     }
 }
 
+const getSwapRequestsByCourse = async (courseCode) => {
+    courseCode = courseCode.toUpperCase();
+    const driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (sr:SwapRequest)-[:WANTS]-(wt:Timeslot)-[:OFFERED_AT]-(c:Course {code: $courseCode})
+                MATCH (sr)-[:OFFERS]-(ot:Timeslot)
+                MATCH (sr)-[:REQUESTED]-(u:User)
+                WHERE sr.status = 'pending'
+                RETURN sr, ot, wt, u`,
+                { courseCode }
+            )
+        );
+        return res.records.map(r => {
+            const sr = r.get('sr').properties;
+            const ot = r.get('ot').properties;
+            const wt = r.get('wt').properties;
+            const u = r.get('u').properties;
+            return {
+                ...sr,
+                offeredTimeslot: ot,
+                wantedTimeslots: [wt],
+                user: u
+            };
+        });
+    }
+    finally {
+        await session.close();
+    }
+}
+
+
+
+
 
 module.exports = {
     getSwapRequests,
@@ -305,5 +341,6 @@ module.exports = {
     updateSwapRequest,
     deleteSwapRequest,
     agreeSwapRequest,
-    disagreeToSwapRequest
+    disagreeToSwapRequest,
+    getSwapRequestsByCourse
 };

@@ -369,5 +369,42 @@ swapRequestsRouter.post('/:id/disagree/', passport.authenticate('jwt', {session:
     }
 });
 
+/**
+ * @swagger
+ * /api/swap-requests/courses/{courseCode}:
+ *  get:
+ *      description: Get all swap requests for a course
+ *      tags:
+ *          - Swap Requests
+ *      parameters:
+ *          - in: path
+ *            name: courseCode
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course code
+ *      responses:
+ *          200:
+ *              description: Success
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/SwapRequestResponse'
+ *          500:
+ *              description: Internal server error
+ *          404:
+ *              description: Not found
+ *          422:
+ *              description: Unprocessable entity
+ */
+
+swapRequestsRouter.get('/courses/:courseCode', async (req, res, next) => {
+    try {
+        const swapRequests = await swapRequestsService.getSwapRequestsByCourse(req.params.courseCode);
+        res.json(swapRequests);
+    } catch (err) {
+        next(err);
+    }
+});
 
 module.exports = swapRequestsRouter;
