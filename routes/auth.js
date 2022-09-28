@@ -57,7 +57,7 @@ const authService = require('../services/auth');
 
 /**
  * @swagger
- * /auth/login:
+ * /api/auth/login:
  *  post:
  *      description: Login a user
  *      tags:
@@ -99,7 +99,7 @@ authRouter.post('/login', passport.authenticate('local', {session: false}), asyn
 
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/register:
  *  post:
  *      description: Register a user
  *      tags:
