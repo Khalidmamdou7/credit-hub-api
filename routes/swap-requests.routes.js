@@ -265,5 +265,60 @@ swapRequestsRouter.delete('/:id', passport.authenticate('jwt', {session: false})
     }
 });
 
+/**
+ * @swagger
+ * /api/swap-requests/{id}/agree:
+ *  post:
+ *      description: Agree to a swap request
+ *      tags:
+ *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: id
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The user swap request id
+ *          - in: body
+ *            name: matchedSwapRequestId
+ *            schema:
+ *              type: object
+ *              properties:
+ *                  matchedSwapRequestId:
+ *                      type: string
+ *                      required: true
+ *                      description: The matched swap request id
+ *              example:
+ *                  matchedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
+ *      responses:
+ *          200:
+ *              description: Success
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/SwapRequestResponse'
+ *          400:
+ *              description: Bad request
+ *          401:
+ *              description: Unauthorized (token not valid)
+ *          404:
+ *              description: Not found
+ *          500:
+ *              description: Internal server error
+ */
+
+swapRequestsRouter.post('/:id/agree/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const mySwapRequestId = req.params.id;
+    const {matchedSwapRequestId} = req.body;
+    try {
+        const swapRequest = await swapRequestsService.agreeSwapRequest(req.user, mySwapRequestId, matchedSwapRequestId);
+        res.json(swapRequest);
+    } catch (err) {
+        next(err);
+    }
+});
+
 
 module.exports = swapRequestsRouter;

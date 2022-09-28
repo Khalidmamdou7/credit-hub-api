@@ -217,6 +217,11 @@ const agreeSwapRequest = async (user, swapRequestId, matchedSwapRequestId) => {
                 { userId: user.userId, swapRequestId, matchedSwapRequestId }
             )
         );
+        
+        if (res.records.length === 0) {
+            throw new ValidationError('Swap request not found');
+        }
+
         const sr = res.records[0].get('sr').properties;
         const ot = res.records[0].get('ot').properties;
         const wt = res.records[0].get('wt').properties;
