@@ -217,7 +217,7 @@ const agreeSwapRequest = async (user, swapRequestId, matchedSwapRequestId) => {
                 { userId: user.userId, swapRequestId, matchedSwapRequestId }
             )
         );
-        
+
         if (res.records.length === 0) {
             throw new ValidationError('Swap request not found');
         }
@@ -268,11 +268,39 @@ const deleteSwapRequest = async (user, swapRequestId) => {
     }
 }
 
+const disagreeToSwapRequest = async (user, swapRequestId, rejectedSwapRequestId) => {
+    const driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.writeTransaction(tx =>
+            tx.run(
+                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+                MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest {id: $rejectedSwapRequestId})
+                DELETE m
+                SET sr.status = 'pending'
+                OPTIONAL MATCH (sr2)-[m2:MATCHES]-(sr3:SwapRequest)
+                SET sr2.status = CASE WHEN m2 IS NULL THEN 'pending' ELSE sr2.status END
+                RETURN sr`,
+                { userId: user.userId, swapRequestId, rejectedSwapRequestId }
+            )
+        );
+        if (res.records.length === 0) {
+            throw new ValidationError('Swap request not found');
+        }
+        const sr = res.records[0].get('sr').properties;
+        return sr;
+    }
+    finally {
+        await session.close();
+    }
+}
+
 
 module.exports = {
     getSwapRequests,
     createSwapRequest,
     updateSwapRequest,
     deleteSwapRequest,
-    agreeSwapRequest
+    agreeSwapRequest,
+    disagreeToSwapRequest
 };

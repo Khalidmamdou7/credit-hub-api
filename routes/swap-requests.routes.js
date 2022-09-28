@@ -320,5 +320,54 @@ swapRequestsRouter.post('/:id/agree/', passport.authenticate('jwt', {session: fa
     }
 });
 
+/**
+ * @swagger
+ * /api/swap-requests/{id}/disagree:
+ *  post:
+ *      description: Disagree to a swap request
+ *      tags:
+ *          - Swap Requests
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: id
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The user swap request id
+ *          - in: body
+ *            name: rejectedSwapRequestId
+ *            schema:
+ *              type: object
+ *              properties:
+ *                  rejectedSwapRequestId:
+ *                      type: string
+ *                      required: true
+ *                      description: The rejected swap request id
+ *              example:
+ *                  rejectedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
+ *      responses:
+ *          200:
+ *              description: Success
+ *          401:
+ *              description: Unauthorized (token not valid)
+ *          404:
+ *              description: Not found
+ *          500:
+ *              description: Internal server error
+ */
+
+swapRequestsRouter.post('/:id/disagree/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const mySwapRequestId = req.params.id;
+    const {rejectedSwapRequestId} = req.body;
+    try {
+        const swapRequest = await swapRequestsService.disagreeToSwapRequest(req.user, mySwapRequestId, rejectedSwapRequestId);
+        res.json(swapRequest);
+    } catch (err) {
+        next(err);
+    }
+});
+
 
 module.exports = swapRequestsRouter;
