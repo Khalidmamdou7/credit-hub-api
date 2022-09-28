@@ -28,6 +28,9 @@ const createSwapRequest = async (user, timeslot) => {
             throw new NotFoundError('One or more wanted timeslots not found');
         }
         // create the swap request
+
+        const startTime = Date.now();
+
         const res3 = await session.writeTransaction(tx =>
             tx.run(
                 `MATCH (u:User {userId: $userId})
@@ -44,6 +47,10 @@ const createSwapRequest = async (user, timeslot) => {
                 RETURN sr, ot, wt`,
                 { userId: user.userId, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
         ));
+
+        const endTime = Date.now();
+        console.log('createSwapRequest time taken :', endTime - startTime);
+
         if (res3.records.length === 0) {
             console.log('offeredTimeslot', offeredTimeslot);
             throw new NotFoundError('Offered timeslot not found');
@@ -52,7 +59,8 @@ const createSwapRequest = async (user, timeslot) => {
         const ot = res3.records[0].get('ot').properties;
         const wt = res3.records[0].get('wt').properties;
         // check if the swap request matches any other swap requests
-        const matches = await checkSwapRequestMatches(user, sr.id);
+        const matches = await checkSwapRequestMatches(session, user, sr.id);
+        sr.status = matches.length > 0 ? matches[0].status : sr.status;
         return {
             ...sr,
             offeredTimeslot: ot,
@@ -65,41 +73,40 @@ const createSwapRequest = async (user, timeslot) => {
     }
 }
 
-const checkSwapRequestMatches = async (user, swapRequestId) => {
-    const driver = getDriver();
-    const session = driver.session();
-    try {
-        const res = await session.writeTransaction(tx =>
-            tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
-                MATCH (sr)-[:OFFERS]->(ot:Timeslot)
-                MATCH (sr)-[:WANTS]->(wt:Timeslot)
-                MATCH (sr2:SwapRequest)-[:OFFERS]->(wt)
-                MATCH (sr2)-[:WANTS]->(ot)
-                MATCH (sr2)<-[:REQUESTED]-(u2:User)
-                WHERE sr2.status = 'pending'
-                AND NOT (u)-[:REQUESTED]->(sr2)
-                SET sr.status = 'waiting-for-agreement'
-                SET sr2.status = 'waiting-for-agreement'
-                CREATE (sr)-[:MATCHES {status: 'waiting-for-agreement'}]->(sr2)
-                RETURN sr, sr2, u2`,
-                { userId: user.userId, swapRequestId }
-            )
-        );
-        return res.records.map(record => {
-            const sr = record.get('sr').properties;
-            const sr2 = record.get('sr2').properties;
-            const u2 = record.get('u2').properties;
-            return {
-                ...sr,
-                matchedSwapRequest: sr2,
-                matchedUser: u2.email
-            };
-        });
-    }
-    finally {
-        await session.close();
-    }
+const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
+    
+    const startTime = Date.now();
+
+    const res = await dbSession.writeTransaction(tx =>
+        tx.run(
+            `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+            MATCH (sr)-[:OFFERS]->(ot:Timeslot)
+            MATCH (sr)-[:WANTS]->(wt:Timeslot)
+            MATCH (sr2:SwapRequest)-[:OFFERS]->(wt)
+            MATCH (sr2)-[:WANTS]->(ot)
+            MATCH (sr2)<-[:REQUESTED]-(u2:User)
+            WHERE sr2.status = 'pending'
+            AND NOT (u)-[:REQUESTED]->(cd sr2)
+            SET sr.status = 'waiting-for-agreement'
+            SET sr2.status = 'waiting-for-agreement'
+            CREATE (sr)-[:MATCHES {status: 'waiting-for-agreement'}]->(sr2)
+            RETURN sr, sr2, u2`,
+            { userId: user.userId, swapRequestId }
+        )
+    );
+    const endTime = Date.now();
+    console.log('checkSwapRequestMatches time taken :', endTime - startTime);
+    
+    return res.records.map(record => {
+        const sr = record.get('sr').properties;
+        const sr2 = record.get('sr2').properties;
+        const u2 = record.get('u2').properties;
+        return {
+            ...sr,
+            matchedSwapRequest: sr2,
+            matchedUser: u2.email
+        };
+    });
 }
 
 const getSwapRequests = async (user) => {
@@ -170,7 +177,8 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
         const w = res.records[0].get('w').properties;
         const o = res.records[0].get('o').properties;
         // check if the swap request matches any other swap requests
-        const matches = await checkSwapRequestMatches(user, sr.id);
+        const matches = await checkSwapRequestMatches(session, user, sr.id);
+        sr.status = matches.sr.status;
         return {
             ...sr,
             offeredTimeslot: o,
