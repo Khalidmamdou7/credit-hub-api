@@ -87,7 +87,7 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
             MATCH (sr2)-[:WANTS]->(ot)
             MATCH (sr2)<-[:REQUESTED]-(u2:User)
             WHERE sr2.status = 'pending'
-            AND NOT (u)-[:REQUESTED]->(cd sr2)
+            AND NOT (u)-[:REQUESTED]->(sr2)
             SET sr.status = 'waiting-for-agreement'
             SET sr2.status = 'waiting-for-agreement'
             CREATE (sr)-[:MATCHES {status: 'waiting-for-agreement'}]->(sr2)
@@ -140,12 +140,21 @@ const getSwapRequests = async (user) => {
                     ...sr,
                     offeredTimeslot: ot,
                     wantedTimeslots: [wt],
-                    matchedSwapRequest: sr2,
-                    matchedUser: u2 ? u2.email : null
+                    matches: [{
+                        ...sr2,
+                        matchedUser: u2
+                    }]
                 };
             }
             else {
-                swapRequests[sr.id].wantedTimeslots.push(wt);
+                if (!swapRequests[sr.id].wantedTimeslots.find(wt => wt.id === wt.id))
+                    swapRequests[sr.id].wantedTimeslots.push(wt);
+                if (sr2 && !swapRequests[sr.id].matches.find(m => m.id === sr2.id)) {
+                    swapRequests[sr.id].matches.push({
+                        ...sr2,
+                        matchedUser: u2.email
+                    });
+                }
             }
         });
         return Object.values(swapRequests);
@@ -180,11 +189,11 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
         const o = res.records[0].get('o').properties;
         // check if the swap request matches any other swap requests
         const matches = await checkSwapRequestMatches(session, user, sr.id);
-        sr.status = matches.sr.status;
+        sr.status = matches.length > 0 ? matches[0].status : sr.status;
         return {
             ...sr,
-            offeredTimeslot: o,
-            wantedTimeslots: [w],
+            offeredTimeslot: ot,
+            wantedTimeslots: [wt],
             matches
         };
     }
@@ -293,6 +302,8 @@ const disagreeToSwapRequest = async (user, swapRequestId, rejectedSwapRequestId)
             throw new ValidationError('Swap request not found');
         }
         const sr = res.records[0].get('sr').properties;
+        const matches = await checkSwapRequestMatches(session, user, sr.id);
+        sr.status = matches.length > 0 ? matches[0].status : sr.status;
         return sr;
     }
     finally {
@@ -324,7 +335,7 @@ const getSwapRequestsByCourse = async (courseCode) => {
                 ...sr,
                 offeredTimeslot: ot,
                 wantedTimeslots: [wt],
-                user: u
+                user: u.email
             };
         });
     }

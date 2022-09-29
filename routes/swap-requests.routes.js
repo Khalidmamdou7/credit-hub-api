@@ -165,10 +165,12 @@ swapRequestsRouter.get('/', passport.authenticate('jwt', {session: false}), asyn
  *          - Swap Requests
  *      security:
  *          - BearerAuth: []
- *      parameters:
- *          - in: body
- *            schema:
- *              $ref: '#/components/schemas/SwapRequestRequest'
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/SwapRequestRequest'
  */
 
 swapRequestsRouter.post('/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
@@ -197,9 +199,12 @@ swapRequestsRouter.post('/', passport.authenticate('jwt', {session: false}), asy
  *              type: string
  *              required: true
  *              description: The swap request id
- *          - in: body
- *            schema:
- *              $ref: '#/components/schemas/SwapRequestRequest'
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      $ref: '#/components/schemas/SwapRequestRequest'
  *      responses:
  *          200:
  *              description: Success
@@ -281,17 +286,18 @@ swapRequestsRouter.delete('/:id', passport.authenticate('jwt', {session: false})
  *              type: string
  *              required: true
  *              description: The user swap request id
- *          - in: body
- *            name: matchedSwapRequestId
- *            schema:
- *              type: object
- *              properties:
- *                  matchedSwapRequestId:
- *                      type: string
- *                      required: true
- *                      description: The matched swap request id
- *              example:
- *                  matchedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          matchedSwapRequestId:
+ *                              type: string
+ *                              description: The matched swap request id
+ *                      example:
+ *                          matchedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
  *      responses:
  *          200:
  *              description: Success
@@ -336,17 +342,18 @@ swapRequestsRouter.post('/:id/agree/', passport.authenticate('jwt', {session: fa
  *              type: string
  *              required: true
  *              description: The user swap request id
- *          - in: body
- *            name: rejectedSwapRequestId
- *            schema:
- *              type: object
- *              properties:
- *                  rejectedSwapRequestId:
- *                      type: string
- *                      required: true
- *                      description: The rejected swap request id
- *              example:
- *                  rejectedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          rejectedSwapRequestId:
+ *                              type: string
+ *                              description: The rejected swap request id
+ *                      example:
+ *                          rejectedSwapRequestId: "4123sd32-4128bhf-312vf23-89jsd23"
  *      responses:
  *          200:
  *              description: Success
