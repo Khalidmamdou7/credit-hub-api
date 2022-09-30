@@ -140,14 +140,14 @@ const getSwapRequests = async (user) => {
                     ...sr,
                     offeredTimeslot: ot,
                     wantedTimeslots: [wt],
-                    matches: [{
+                    matches: u2 ? [{
                         ...sr2,
-                        matchedUser: u2
-                    }]
+                        matchedUser: u2.email
+                    }] : []
                 };
             }
             else {
-                if (!swapRequests[sr.id].wantedTimeslots.find(wt => wt.id === wt.id))
+                if (!swapRequests[sr.id].wantedTimeslots.find(wantedTimeslot => wantedTimeslot.id === wt.id))
                     swapRequests[sr.id].wantedTimeslots.push(wt);
                 if (sr2 && !swapRequests[sr.id].matches.find(m => m.id === sr2.id)) {
                     swapRequests[sr.id].matches.push({
