@@ -263,8 +263,8 @@ swapRequestsRouter.put('/:id', passport.authenticate('jwt', {session: false}), a
 
 swapRequestsRouter.delete('/:id', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     try {
-        const swapRequest = await swapRequestsService.deleteSwapRequest(req.user, req.params.id);
-        res.json(swapRequest);
+        const deleted = await swapRequestsService.deleteSwapRequest(req.user, req.params.id);
+        res.json(deleted);
     } catch (err) {
         next(err);
     }

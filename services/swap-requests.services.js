@@ -267,13 +267,16 @@ const deleteSwapRequest = async (user, swapRequestId) => {
         const res = await session.writeTransaction(tx =>
             tx.run(
                 `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
-                MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest)
+                OPTIONAL MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest)
                 OPTIONAL MATCH (sr2)-[m2:MATCHES]-(sr3:SwapRequest)
                 SET sr2.status = CASE WHEN m2 IS NULL THEN 'pending' ELSE sr2.status END
-                DETACH DELETE sr`,
+                DETACH DELETE sr RETURN count(sr)`,
                 { userId: user.userId, swapRequestId }
             )
         );
+        if (res.records[0].get(0).low === 0) {
+            throw new ValidationError('Swap request not found');
+        }
         return res.records.length > 0;
     }
     finally {
