@@ -49,6 +49,26 @@ const validateTime = (time) => {
         throw new ValidationError('Invalid time format, must be in the format of 12:00 or 9:00, input: ' + time);
 }
 
+const validateMobileNumber = (mobile) => {
+    if (typeof mobile !== 'string')
+        throw new ValidationError('Mobile number must be a string');
+    // remove all non-digit characters
+    mobile = mobile.replace(/\D/g, '');
+    // mobile number must be in the format of 01xxxxxxxxx
+    if (!mobile.match(/^01[0-9]{9}$/))
+        throw new ValidationError('Invalid mobile number, must be in the format of 01xxxxxxxxx');
+    return mobile;
+}
+
+const validateProgramCode = (programCode) => {
+    if (typeof programCode !== 'string')
+        throw new ValidationError('Program code must be a string');
+    programCode = programCode.toUpperCase();
+    if (!programCode.match(/^[A-Z]{2,4}$/))
+        throw new ValidationError('Invalid program code, must be in the format of CCEC, EEE or UND');
+    return programCode;
+}
+
 
 module.exports = {
     validateCourseCode,
@@ -56,5 +76,7 @@ module.exports = {
     validateTimeslotType,
     validateGroup,
     validateDay,
-    validateTime
+    validateTime,
+    validateMobileNumber,
+    validateProgramCode
 }

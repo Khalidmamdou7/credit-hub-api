@@ -130,8 +130,8 @@ authRouter.post('/login', passport.authenticate('local', {session: false}), asyn
 
 authRouter.post('/register', async (req, res, next) => {
     try {
-        const {email, password, name} = req.body;
-        const output = await authService.register(email, password, name);
+        const {email, password, name, mobile, program} = req.body;
+        const output = await authService.register(email, password, name, mobile, program);
         res.json(output);
     } catch (e) {
         next(e);

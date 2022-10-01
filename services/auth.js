@@ -2,19 +2,24 @@ const jwt = require('jsonwebtoken');
 const { hash, compare } = require('bcrypt');
 const { getDriver } = require('../neo4j');
 const validator = require('validator');
+const { validateMobileNumber, validateProgramCode} = require('../utils/validation');
 const ValidationError = require('../errors/validation.error');
 const {sendConfirmationEmail} = require('../utils/utils');
 const NotFoundError = require('../errors/not-found.error');
 
 
-const register = async (email, plainPassword, name) => {
+const register = async (email, plainPassword, name, mobile, program) => {
     if (!validator.isEmail(email))
         throw new ValidationError('Invalid email');
     email = validator.normalizeEmail(email);
     
     if (plainPassword.length < 8) 
         throw new ValidationError('Password must be at least 8 characters');
-    
+
+    mobile = mobile || '';
+    program = program || '';
+    mobile = mobile == '' ? mobile: validateMobileNumber(mobile);
+    program = program == '' ? program: validateProgramCode(program);
 
     const encrypted = await hash(plainPassword, parseInt(process.env.SALT_ROUNDS));
 
@@ -29,10 +34,12 @@ const register = async (email, plainPassword, name) => {
                     email: $email,
                     password: $encrypted,
                     name: $name,
+                    mobile: CASE WHEN $mobile = '' THEN null ELSE $mobile END,
+                    program: CASE WHEN $program = '' THEN null ELSE $program END,
                     active: false
                 })
                 RETURN u`,
-                { email, encrypted, name }
+                { email, encrypted, name , mobile, program }
             )
         );
         
