@@ -226,11 +226,11 @@ const agreeSwapRequest = async (user, swapRequestId, matchedSwapRequestId) => {
                 SET sr.status = 'agreed'
                 SET m1.status = CASE WHEN sr2.status = 'agreed' THEN 'agreed' ELSE m1.status END
                 WITH *
-                MATCH (sr)-[m2:MATCHES]->(sr3:SwapRequest)
+                OPTIONAL MATCH (sr)-[m2:MATCHES]->(sr3:SwapRequest)
                 WHERE sr3 <> sr2
                 DELETE m2
                 WITH *
-                MATCH (sr3)-[m3:MATCHES]->(sr4:SwapRequest)
+                OPTIONAL MATCH (sr3)-[m3:MATCHES]->(sr4:SwapRequest)
                 WHERE sr4 <> sr
                 SET sr4.status = CASE WHEN m3.status IS NULL THEN 'pending' ELSE sr3.status END
                 RETURN sr, ot, wt, sr2, ot2, wt2, m1`,
