@@ -49,10 +49,18 @@ const authService = require('../services/auth');
  *              password:
  *                  type: string
  *                  description: The user's password
+ *              mobile:
+ *                  type: string
+ *                  description: The user's mobile must be in the format of 01xxxxxxxxx
+ *              program:
+ *                  type: string
+ *                  description: The user's program code must be in the format of 2 to 4 characters like CCEC, UND, PRE
  *          example:
  *              email: "khalidmamdou7@gmail.com"
  *              name: "Khalid Mamdouh"
  *              password: "12345678"
+ *              mobile: "01000000000"
+ *              program: "CCEC"
  */
 
 /**
