@@ -143,7 +143,10 @@ const getSwapRequests = async (user) => {
                     course: c,
                     matches: u2 ? [{
                         ...sr2,
-                        matchedUser: u2.email
+                        matchedUser: {
+                            name: u2.name,
+                            email: u2.email
+                        }
                     }] : []
                 };
             }
@@ -153,7 +156,7 @@ const getSwapRequests = async (user) => {
                 if (sr2 && !swapRequests[sr.id].matches.find(m => m.id === sr2.id)) {
                     swapRequests[sr.id].matches.push({
                         ...sr2,
-                        matchedUser: u2.email
+                        matchedUser: { name: u2.name, email: u2.email }
                     });
                 }
             }
@@ -170,7 +173,7 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
     const offeredTimeslot = timeslot.offeredTimeslot || "";
 
     // TODO: validate offered and wanted timeslots ids
-    
+
     const driver = getDriver();
     const session = driver.session();
     try {
@@ -344,7 +347,9 @@ const getSwapRequestsByCourse = async (courseCode) => {
             if (!swapRequests[sr.id]) {
                 swapRequests[sr.id] = {
                     ...sr,
-                    userEmail: u.email,
+                    user: {
+                        name: u.name, email: u.email
+                    },
                     offeredTimeslot: ot,
                     wantedTimeslots: [wt]
                 };
