@@ -57,15 +57,13 @@ const createSwapRequest = async (user, timeslot) => {
             throw new NotFoundError('Offered timeslot not found');
         }
         const sr = res3.records[0].get('sr').properties;
-        const ot = res3.records[0].get('ot').properties;
-        const wt = res3.records[0].get('wt').properties;
         // check if the swap request matches any other swap requests
         const matches = await checkSwapRequestMatches(session, user, sr.id);
         sr.status = matches.length > 0 ? matches[0].status : sr.status;
         return {
             ...sr,
-            offeredTimeslot: ot,
-            wantedTimeslots: [wt],
+            offeredTimeslot,
+            wantedTimeslots,
             matches
         };
     }
@@ -170,6 +168,9 @@ const getSwapRequests = async (user) => {
 const updateSwapRequest = async (user, timeslotId, timeslot) => {
     const wantedTimeslots = timeslot.wantedTimeslots || [];
     const offeredTimeslot = timeslot.offeredTimeslot || "";
+
+    // TODO: validate offered and wanted timeslots ids
+    
     const driver = getDriver();
     const session = driver.session();
     try {
@@ -195,8 +196,8 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
         sr.status = matches.length > 0 ? matches[0].status : sr.status;
         return {
             ...sr,
-            offeredTimeslot: ot,
-            wantedTimeslots: [wt],
+            offeredTimeslot,
+            wantedTimeslots,
             matches
         };
     }
@@ -332,18 +333,28 @@ const getSwapRequestsByCourse = async (courseCode) => {
                 { courseCode }
             )
         );
-        return res.records.map(r => {
-            const sr = r.get('sr').properties;
-            const ot = r.get('ot').properties;
-            const wt = r.get('wt').properties;
-            const u = r.get('u').properties;
-            return {
-                ...sr,
-                offeredTimeslot: ot,
-                wantedTimeslots: [wt],
-                user: u.email
-            };
+        // for each swap request, get the offered and wanted timeslots. if there are multiples wanted time slots,
+        // then the sr, ot, wt, u will be duplicated. so we need to group them by swap request id
+        const swapRequests = {};
+        res.records.forEach(record => {
+            const sr = record.get('sr').properties;
+            const ot = record.get('ot').properties;
+            const wt = record.get('wt').properties;
+            const u = record.get('u').properties;
+            if (!swapRequests[sr.id]) {
+                swapRequests[sr.id] = {
+                    ...sr,
+                    userEmail: u.email,
+                    offeredTimeslot: ot,
+                    wantedTimeslots: [wt]
+                };
+            }
+            else {
+                if (!swapRequests[sr.id].wantedTimeslots.find(wantedTimeslot => wantedTimeslot.id === wt.id))
+                    swapRequests[sr.id].wantedTimeslots.push(wt);
+            }
         });
+        return Object.values(swapRequests);
     }
     finally {
         await session.close();
