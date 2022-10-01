@@ -171,7 +171,7 @@ authRouter.get('/confirm/:userId/:token', async (req, res, next) => {
     try {
         const {userId, token} = req.params;
         const output = await authService.confirmEmail(userId, token);
-        res.json(output);
+        res.redirect(`http://${process.env.CLIENT_URL}/login?emailConfirmed=true`);
     } catch (e) {
         next(e);
     }
