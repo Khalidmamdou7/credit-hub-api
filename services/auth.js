@@ -211,9 +211,8 @@ const forgotPassword = async (email) => {
         const user = res.records[0].get('u');
         const { password, ...safeProperties } = user.properties
         const token = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
-        const { userId } = user.properties;
 
-        sendResetPasswordEmail(email, userId, token);
+        sendResetPasswordEmail(email, token);s
 
         return {
             message: 'Please check your email to reset your password'
