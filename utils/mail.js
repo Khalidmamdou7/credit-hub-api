@@ -130,9 +130,9 @@ const sendMatchFoundEmail = async (email) => {
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Email sent');
+        console.log('Match Found email sent');
     } catch (error) {
-        console.log("Error sending email: ", error);
+        console.log("Error sending match found email: ", error);
     }
 };
 

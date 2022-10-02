@@ -17,17 +17,38 @@ const createSwapRequest = async (user, timeslot) => {
             throw new ValidationError('Cannot swap a timeslot with itself');
         }
         
-        const res2 = await session.readTransaction(tx =>
+        const wantedTimeslotsRes = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (t:Timeslot)
                 WHERE t.id IN $wantedTimeslotIds
                 RETURN t`,
                 { wantedTimeslotIds: wantedTimeslots }
         ));
-        if (res2.records.length !== wantedTimeslots.length) {
+        if (wantedTimeslotsRes.records.length !== wantedTimeslots.length) {
             console.log('wantedTimeslots', wantedTimeslots);
             throw new NotFoundError('One or more wanted timeslots not found');
         }
+
+        const offeredTimeslotRes = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (t:Timeslot)
+                WHERE t.id = $offeredTimeslotId
+                RETURN t`,
+                { offeredTimeslotId: offeredTimeslot }
+        ));
+        if (offeredTimeslotRes.records.length !== 1) {
+            console.log('offeredTimeslot', offeredTimeslot);
+            throw new NotFoundError('Offered timeslot not found');
+        }
+
+        const offeredTimeslotType = offeredTimeslotRes.records[0].get('t').properties.type;
+        const wantedTimeslotTypes = wantedTimeslotsRes.records.map(record => record.get('t').properties.type);
+        if (!wantedTimeslotTypes.every(type => type === offeredTimeslotType)) {
+            console.log('offeredTimeslotType', offeredTimeslotType);
+            console.log('wantedTimeslotTypes', wantedTimeslotTypes);
+            throw new ValidationError('Offered and wanted timeslots must be of the same type, either lecture or tutorial');
+        }
+
         // create the swap request
 
         const startTime = Date.now();
@@ -53,10 +74,10 @@ const createSwapRequest = async (user, timeslot) => {
         console.log('createSwapRequest time taken :', endTime - startTime);
 
         if (res3.records.length === 0) {
-            console.log('offeredTimeslot', offeredTimeslot);
-            throw new NotFoundError('Offered timeslot not found');
+            throw new Error('Failed to create swap request');
         }
         const sr = res3.records[0].get('sr').properties;
+
         // check if the swap request matches any other swap requests
         const matches = await checkSwapRequestMatches(session, user, sr.id);
         sr.status = matches.length > 0 ? matches[0].status : sr.status;
