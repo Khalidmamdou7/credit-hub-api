@@ -223,8 +223,10 @@ const forgotPassword = async (email) => {
 }
 
 const resetPassword = async (userId, plainPassword) => {
-    if (plainPassword.length < 8)
+    if (!plainPassword || plainPassword.length < 8)
         throw new ValidationError('Password must be at least 8 characters');
+    
+    console.log('resetPassword', userId, plainPassword);
     
     const encrypted = await hash(plainPassword, parseInt(process.env.SALT_ROUNDS));
 
