@@ -24,7 +24,7 @@ const Neo4jStrategy = new LocalStrategy({
 
 const jwtStrategy = new JwtStrategy({
   secretOrKey: process.env.JWT_SECRET,    // Secret for encoding/decoding the JWT token
-  ignoreExpiration: true,     // Ignoring the expiration date of a token may not be the best idea in a production environment
+  ignoreExpiration: false,     // Ignoring the expiration date of a token may not be the best idea in a production environment
   passReqToCallback: true,    // Passing the request to the callback allows us to use the open transaction
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 }, async (req, claims, done) => {

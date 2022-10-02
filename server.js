@@ -7,6 +7,7 @@ const { initDriver } = require('./neo4j');
 const cors = require('cors');
 const swaggerUI = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
+const helmet = require('helmet');
 
 const authRouter = require('./routes/auth');
 const coursesRouter = require('./routes/courses.routes');
@@ -46,6 +47,7 @@ app.use(passport.initialize());
 app.use(cors({
     origin: '*'
 }));
+app.use(helmet());
 
 // Connect to Neo4j and Verify Connectivity
 const {
