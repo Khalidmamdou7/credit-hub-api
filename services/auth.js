@@ -223,12 +223,7 @@ const forgotPassword = async (email) => {
     }
 }
 
-const resetPassword = async (userId, token, plainPassword) => {
-    const claims = jwt.verify(token, process.env.JWT_SECRET);
-    if (claims.userId !== userId) {
-        throw new ValidationError('Invalid token');
-    }
-
+const resetPassword = async (userId, plainPassword) => {
     if (plainPassword.length < 8)
         throw new ValidationError('Password must be at least 8 characters');
 

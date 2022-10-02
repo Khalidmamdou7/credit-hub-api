@@ -59,7 +59,7 @@ const sendConfirmationEmail = async (email, userId, token) => {
 
 };
 
-const sendResetPasswordEmail = async (email, userId, token) => {
+const sendResetPasswordEmail = async (email, token) => {
     try {
         const mailOptions = {
             from: process.env.EMAIL,
@@ -69,9 +69,9 @@ const sendResetPasswordEmail = async (email, userId, token) => {
             <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
                 <h1 style="text-align: center; color: #4d4d4d;">Reset your password</h1>
                 <p style="text-align: center; color: #4d4d4d;">Please click the button below to reset your password.</p>
-                <a href="http://${process.env.CLIENT_URL}/reset-password/${userId}/${token}" style="text-decoration: none; display: block; margin: 0 auto; width: 200px; background-color: #4d4d4d; color: #f2f2f2; padding: 10px; border-radius: 10px; text-align: center;">Reset password</a>
+                <a href="http://${process.env.CLIENT_URL}/reset-password?token=${token}" style="text-decoration: none; display: block; margin: 0 auto; width: 200px; background-color: #4d4d4d; color: #f2f2f2; padding: 10px; border-radius: 10px; text-align: center;">Reset password</a>
                 <p style="text-align: center; color: #4d4d4d;">If you can't click on the button, please copy the following link to your browser</p>
-                <p style="text-align: center; color: #4d4d4d;">http://${process.env.CLIENT_URL}/reset-password/${userId}/${token}</p>
+                <p style="text-align: center; color: #4d4d4d;">"http://${process.env.CLIENT_URL}/reset-password?token=${token}"</p>
                 <br>
                 <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
                 <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>
