@@ -225,18 +225,19 @@ const forgotPassword = async (email) => {
 const resetPassword = async (userId, plainPassword) => {
     if (plainPassword.length < 8)
         throw new ValidationError('Password must be at least 8 characters');
+    
+    const encrypted = await hash(plainPassword, parseInt(process.env.SALT_ROUNDS));
 
     driver = getDriver();
     const session = driver.session();
 
     try {
-        const encryptedPassword = await hash(plainPassword, 10);
         const res = await session.writeTransaction(tx =>
             tx.run(
                 `MATCH (u:User {userId: $userId})
                 SET u.password = $password
                 RETURN u`,
-                { userId, password: encryptedPassword }
+                { userId, password: encrypted }
             )
         );
 
