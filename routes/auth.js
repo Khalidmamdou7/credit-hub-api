@@ -7,6 +7,11 @@ const authService = require('../services/auth');
 /**
  * @swagger
  * components:
+ *  securitySchemes:
+ *      BearerAuth:
+ *          type: http
+ *          scheme: bearer
+ *          bearerFormat: JWT
  *  schemas:
  *      UserResponse:
  *          type: object
@@ -266,7 +271,7 @@ authRouter.post('/forgot-password', async (req, res, next) => {
  *      tags:
  *          - auth
  *      security:
- *          - bearerAuth: []
+ *          - BearerAuth: []
  *      requestBody:
  *          required: true
  *          content:
