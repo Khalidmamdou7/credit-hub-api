@@ -267,7 +267,7 @@ authRouter.post('/forgot-password', async (req, res, next) => {
 
 /**
  * @swagger
- * /api/auth/reset-password/{userId}/{token}:
+ * /api/auth/reset-password:
  *  post:
  *      description: Reset a user's password
  *      tags:
