@@ -37,17 +37,17 @@ const sendConfirmationEmail = async (email, userId, token) => {
             to: email,
             subject: 'Confirm your email',
             html: `
-            <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
-                <h1 style="text-align: center; color: #4d4d4d;">Confirm your email</h1>
-                <p style="text-align: center; color: #4d4d4d;">Please click the button below to confirm your email.</p>
-                <a href="http://${process.env.DOMAIN}/api/auth/confirm/${userId}/${token}" style="text-decoration: none; display: block; margin: 0 auto; width: 200px; background-color: #4d4d4d; color: #f2f2f2; padding: 10px; border-radius: 10px; text-align: center;">Confirm</a>
-                <p style="text-align: center; color: #4d4d4d;">If you can't click on the button, please copy the following link to your browser</p>
-                <p style="text-align: center; color: #4d4d4d;">http://${process.env.DOMAIN}/api/auth/confirm/${userId}/${token}</p>
+            <div style="background-color: #23272B; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
+                <h1 style="text-align: center; color: #FFFFFF;">Confirm your email</h1>
+                <p style="text-align: center; color: #FFFFFF;">Please click the button below to confirm your email.</p>
+                <a href="http://${process.env.DOMAIN}/api/auth/confirm/${userId}/${token}" style="text-decoration: none; display: block; margin: 0 auto; width: 200px; background-color: #17A2B8; color: #f2f2f2; padding: 10px; border-radius: 10px; text-align: center;">Confirm</a>
+                <p style="text-align: center; color: #FFFFFF;">If you can't click on the button, please copy the following link to your browser</p>
+                <p style="text-align: center; color: #17A2B8;">http://${process.env.DOMAIN}/api/auth/confirm/${userId}/${token}</p>
                 <br>
-                <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
-                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>
-                <hr style="border: 0.5px solid #4d4d4d; width: 100%; margin: 20px 0;">
-                <p style="text-align: center; color: #4d4d4d;">If you didn't sign up for an account, you can safely delete this email</p>
+                <p style="text-align: center; color: #FFFFFF;">Thank you for using our website</p>
+                <p style="text-align: center; color: #FFFFFF;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #17A2B8;">Swap Courses</a> team</p>
+                <hr style="border: 0.5px solid #FFFFFF; width: 100%; margin: 20px 0;">
+                <p style="text-align: center; color: #FFFFFF;">If you didn't sign up for an account, you can safely delete this email</p>
             </div>
             `
         };
@@ -66,17 +66,17 @@ const sendResetPasswordEmail = async (email, token) => {
             to: email,
             subject: 'Reset your password',
             html: `
-            <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
-                <h1 style="text-align: center; color: #4d4d4d;">Reset your password</h1>
-                <p style="text-align: center; color: #4d4d4d;">Please click the button below to reset your password.</p>
-                <a href="http://${process.env.CLIENT_URL}/reset-password?token=${token}" style="text-decoration: none; display: block; margin: 0 auto; width: 200px; background-color: #4d4d4d; color: #f2f2f2; padding: 10px; border-radius: 10px; text-align: center;">Reset password</a>
-                <p style="text-align: center; color: #4d4d4d;">If you can't click on the button, please copy the following link to your browser</p>
-                <p style="text-align: center; color: #4d4d4d;">"http://${process.env.CLIENT_URL}/reset-password?token=${token}"</p>
+            <div style="background-color: #23272B; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
+                <h1 style="text-align: center; color: #FFFFFF;">Reset your password</h1>
+                <p style="text-align: center; color: #FFFFFF;">Please click the button below to reset your password.</p>
+                <a href="http://${process.env.CLIENT_URL}/reset-password?token=${token}" style="text-decoration: none; display: block; margin: 0 auto; width: 200px; background-color: #17A2B8; color: #f2f2f2; padding: 10px; border-radius: 10px; text-align: center;">Reset password</a>
+                <p style="text-align: center; color: #FFFFFF;">If you can't click on the button, please copy the following link to your browser</p>
+                <p style="text-align: center; color: #17A2B8;">"http://${process.env.CLIENT_URL}/reset-password?token=${token}"</p>
                 <br>
-                <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
-                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>
-                <hr style="border: 0.5px solid #4d4d4d; width: 100%; margin: 20px 0;">
-                <p style="text-align: center; color: #4d4d4d;">If you didn't request to reset your password, you can safely delete this email</p>
+                <p style="text-align: center; color: #FFFFFF;">Thank you for using our website</p>
+                <p style="text-align: center; color: #FFFFFF;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #17A2B8;">Swap Courses</a> team</p>
+                <hr style="border: 0.5px solid #FFFFFF; width: 100%; margin: 20px 0;">
+                <p style="text-align: center; color: #FFFFFF;">If you didn't request to reset your password, you can safely delete this email</p>
             </div>
             `
         };
@@ -119,15 +119,15 @@ const sendMatchFoundEmail = async (email, course, offeredTimeslot, wantedTimeslo
             to: email,
             subject: 'Congratulations! You have a new match!',
             html: `
-            <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
-                <h1 style="text-align: center; color: #4d4d4d;">Congratulations! You have a new match!</h1>
-                <p style="text-align: center; color: #4d4d4d;">You have a match for the course <b>${course.code} - ${course.name} ${offeredTimeslot.type}</b> with <b>${otherUserName}</b>.</p>
-                <p style="text-align: center; color: #4d4d4d;">You offered the timeslot <b>${offeredTimeslot.day} ${offeredTimeslot.startTime} - ${offeredTimeslot.endTime}</b> of group <b>${offeredTimeslot.group}</b> and you wanted the timeslot <b>${wantedTimeslot.day} ${wantedTimeslot.startTime} - ${wantedTimeslot.endTime}</b> of group <b>${wantedTimeslot.group}</b>.</p>
-                <p style="text-align: center; color: #4d4d4d;">You can contact your match at <a href="mailto:${otherUserEmail}" style="text-decoration: none; color: #4d4d4d;">${otherUserEmail}</a></p>
-                <p style="text-align: center; color: #4d4d4d;">Once you have agreed on the swap, you can confirm it on the <a href="http://${process.env.CLIENT_URL}/" style="text-decoration: none; color: #4d4d4d;">My Swaps</a> page.</p>
+            <div style="background-color: #23272B; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
+                <h1 style="text-align: center; color: #FFFFFF;">Congratulations! You have a new match!</h1>
+                <p style="text-align: center; color: #FFFFFF;">You have a match for the course <b>${course.code} - ${course.name} ${offeredTimeslot.type}</b> with <b>${otherUserName}</b>.</p>
+                <p style="text-align: center; color: #FFFFFF;">You offered the timeslot <b>${offeredTimeslot.day} ${offeredTimeslot.startTime} - ${offeredTimeslot.endTime}</b> of group <b>${offeredTimeslot.group}</b> and you wanted the timeslot <b>${wantedTimeslot.day} ${wantedTimeslot.startTime} - ${wantedTimeslot.endTime}</b> of group <b>${wantedTimeslot.group}</b>.</p>
+                <p style="text-align: center; color: #FFFFFF;">You can contact your match at <a href="mailto:${otherUserEmail}" style="text-decoration: none; color: #17A2B8;">${otherUserEmail}</a></p>
+                <p style="text-align: center; color: #FFFFFF;">Once you have agreed on the swap, you can confirm it on the <a href="http://${process.env.CLIENT_URL}/" style="text-decoration: none; color: #17A2B8;">My Swaps</a> page.</p>
                 <br>
-                <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
-                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>
+                <p style="text-align: center; color: #FFFFFF;">Thank you for using our website</p>
+                <p style="text-align: center; color: #FFFFFF;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #17A2B8;">Swap Courses</a> team</p>
             </div>
             `
         };
