@@ -212,7 +212,7 @@ const forgotPassword = async (email) => {
         const { password, ...safeProperties } = user.properties
         const token = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
 
-        sendResetPasswordEmail(email, token);s
+        sendResetPasswordEmail(email, token);
 
         return {
             message: 'Please check your email to reset your password'
