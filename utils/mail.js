@@ -52,9 +52,9 @@ const sendConfirmationEmail = async (email, userId, token) => {
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Email sent');
+        console.log('Confirmation Email sent');
     } catch (error) {
-        console.log("Error sending email: ", error);
+        console.log("Error sending confirmation email: ", error);
     }
 
 };
@@ -81,9 +81,33 @@ const sendResetPasswordEmail = async (email, userId, token) => {
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Email sent');
+        console.log('Reset Password email sent');
     } catch (error) {
-        console.log("Error sending email: ", error);
+        console.log("Error sending reset Password email: ", error);
+    }
+};
+
+const sendPasswordChangedEmail = async (email) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL,
+            to: email,
+            subject: 'Password changed',
+            html: `
+            <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
+                <h1 style="text-align: center; color: #4d4d4d;">Password changed</h1>
+                <p style="text-align: center; color: #4d4d4d;">Your password has been changed successfully.</p>
+                <p style="text-align: center; color: #4d4d4d;">If you didn't change your password, please contact us immediately at <a href="mailto:${process.env.EMAIL}" style="text-decoration: none; color: #4d4d4d;">${process.env.EMAIL}</a></p>
+                <br>
+                <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
+                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>
+            </div>
+            `
+        };
+        await transporter.sendMail(mailOptions);
+        console.log('Password changed email sent');
+    } catch (error) {
+        console.log("Error sending password changed email: ", error);
     }
 };
 
@@ -117,5 +141,6 @@ module.exports = {
     sendEmail,
     sendConfirmationEmail,
     sendMatchFoundEmail,
-    sendResetPasswordEmail
+    sendResetPasswordEmail,
+    sendPasswordChangedEmail
 };

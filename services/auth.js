@@ -4,7 +4,7 @@ const { getDriver } = require('../neo4j');
 const validator = require('validator');
 const { validateMobileNumber, validateProgramCode} = require('../utils/validation');
 const ValidationError = require('../errors/validation.error');
-const {sendConfirmationEmail, sendResetPasswordEmail} = require('../utils/mail');
+const {sendConfirmationEmail, sendResetPasswordEmail, sendPasswordChangedEmail} = require('../utils/mail');
 const NotFoundError = require('../errors/not-found.error');
 
 
@@ -253,6 +253,8 @@ const resetPassword = async (userId, token, plainPassword) => {
         const user = res.records[0].get('u');
         const { password, ...safeProperties } = user.properties
         const newToken = jwt.sign(userToClaims(safeProperties), process.env.JWT_SECRET);
+        
+        sendPasswordChangedEmail(user.properties.email);
 
         return {
             token: newToken,
