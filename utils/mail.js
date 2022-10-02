@@ -112,29 +112,32 @@ const sendPasswordChangedEmail = async (email) => {
 };
 
 // send a notification email to the user that a match has been found for his swap request
-const sendMatchFoundEmail = async (email) => {
+const sendMatchFoundEmail = async (email, course, offeredTimeslot, wantedTimeslot, otherUserEmail, otherUserName) => {
     try {
         const mailOptions = {
             from: process.env.EMAIL,
             to: email,
-            subject: 'Match found',
+            subject: 'Congratulations! You have a new match!',
             html: `
             <div style="background-color: #f2f2f2; padding: 20px; border-radius: 10px; width: 500px; margin: 0 auto;">
-                <h1 style="text-align: center; color: #4d4d4d;">Match found</h1>
-                <p style="text-align: center; color: #4d4d4d;">A match has been found for your swap request</p>
-                <p style="text-align: center; color: #4d4d4d;">You can view the match on your <a href="http://${process.env.CLIENT_URL}/swapstatus" style="text-decoration: none; color: #4d4d4d;">dashboard</a></p>
+                <h1 style="text-align: center; color: #4d4d4d;">Congratulations! You have a new match!</h1>
+                <p style="text-align: center; color: #4d4d4d;">You have a match for the course <b>${course.code} - ${course.name} ${offeredTimeslot.type}</b> with <b>${otherUserName}</b>.</p>
+                <p style="text-align: center; color: #4d4d4d;">You offered the timeslot <b>${offeredTimeslot.day} ${offeredTimeslot.startTime} - ${offeredTimeslot.endTime}</b> of group <b>${offeredTimeslot.group}</b> and you wanted the timeslot <b>${wantedTimeslot.day} ${wantedTimeslot.startTime} - ${wantedTimeslot.endTime}</b> of group <b>${wantedTimeslot.group}</b>.</p>
+                <p style="text-align: center; color: #4d4d4d;">You can contact your match at <a href="mailto:${otherUserEmail}" style="text-decoration: none; color: #4d4d4d;">${otherUserEmail}</a></p>
+                <p style="text-align: center; color: #4d4d4d;">Once you have agreed on the swap, you can confirm it on the <a href="http://${process.env.CLIENT_URL}/" style="text-decoration: none; color: #4d4d4d;">My Swaps</a> page.</p>
                 <br>
                 <p style="text-align: center; color: #4d4d4d;">Thank you for using our website</p>
-                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>  
+                <p style="text-align: center; color: #4d4d4d;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #4d4d4d;">Swap Courses</a> team</p>
             </div>
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Match Found email sent');
+        console.log('Match found email sent');
     } catch (error) {
         console.log("Error sending match found email: ", error);
     }
 };
+
 
 
 module.exports = {

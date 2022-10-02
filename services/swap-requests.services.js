@@ -102,6 +102,7 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
             `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
             MATCH (sr)-[:OFFERS]->(ot:Timeslot)
             MATCH (sr)-[:WANTS]->(wt:Timeslot)
+            MATCH (ot)-[:OFFERED_AT]-(c:Course)
             MATCH (sr2:SwapRequest)-[:OFFERS]->(wt)
             MATCH (sr2)-[:WANTS]->(ot)
             MATCH (sr2)<-[:REQUESTED]-(u2:User)
@@ -109,8 +110,8 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
             AND NOT (u)-[:REQUESTED]->(sr2)
             SET sr.status = 'waiting-for-agreement'
             SET sr2.status = 'waiting-for-agreement'
-            CREATE (sr)-[:MATCHES {status: 'waiting-for-agreement'}]->(sr2)
-            RETURN sr, sr2, u2`,
+            CREATE (sr)-[m:MATCHES {status: 'waiting-for-agreement', timeslot_1: ot.id, timeslot_2: wt.id}]->(sr2)
+            RETURN sr, sr2, u2, m, ot, wt, c, u.email`,
             { userId: user.userId, swapRequestId }
         )
     );
@@ -121,7 +122,12 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
         const sr = record.get('sr').properties;
         const sr2 = record.get('sr2').properties;
         const u2 = record.get('u2').properties;
-        sendMatchFoundEmail(u2.email);
+        const m = record.get('m').properties;
+        const ot = record.get('ot').properties;
+        const wt = record.get('wt').properties;
+        const c = record.get('c').properties;
+        user.email = record.get('u.email');
+        sendMatchFoundEmail(u2.email, c, wt, ot, user.email, user.name);
         return {
             ...sr,
             matchedSwapRequest: sr2,
@@ -141,9 +147,11 @@ const getSwapRequests = async (user) => {
                 MATCH (sr)-[:OFFERS]->(ot:Timeslot)
                 MATCH (sr)-[:WANTS]->(wt:Timeslot)
                 MATCH (ot)-[:OFFERED_AT]-(c:Course)
-                OPTIONAL MATCH (sr)-[:MATCHES]-(sr2:SwapRequest)
+                OPTIONAL MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest)
+                OPTIONAL MATCH (matchedTimeslot_1:Timeslot {id: m.timeslot_1})
+                OPTIONAL MATCH (matchedTimeslot_2:Timeslot {id: m.timeslot_2})
                 OPTIONAL MATCH (sr2)<-[:REQUESTED]-(u2:User)
-                RETURN sr, ot, wt, sr2, u2, c`,
+                RETURN sr, ot, wt, sr2, u2, c, matchedTimeslot_1, matchedTimeslot_2`,
                 { userId: user.userId }
         ));
         // for each swap request, get the offered and wanted timeslots. if there are duplicates swap requests,
@@ -156,6 +164,8 @@ const getSwapRequests = async (user) => {
             const c = record.get('c').properties;
             const sr2 = record.get('sr2') ? record.get('sr2').properties : null;
             const u2 = record.get('u2') ? record.get('u2').properties : null;
+            const matchedTimeslot_1 = record.get('matchedTimeslot_1') ? record.get('matchedTimeslot_1').properties : null;
+            const matchedTimeslot_2 = record.get('matchedTimeslot_2') ? record.get('matchedTimeslot_2').properties : null;
             if (!swapRequests[sr.id]) {
                 swapRequests[sr.id] = {
                     ...sr,
@@ -164,6 +174,10 @@ const getSwapRequests = async (user) => {
                     course: c,
                     matches: u2 ? [{
                         ...sr2,
+                        matchedTimeslots: {
+                            offered: ot.id === matchedTimeslot_1.id ? matchedTimeslot_2 : matchedTimeslot_1,
+                            wanted: ot.id === matchedTimeslot_1.id ? matchedTimeslot_1 : matchedTimeslot_2
+                        },
                         matchedUser: {
                             name: u2.name,
                             email: u2.email
