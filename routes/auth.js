@@ -224,5 +224,99 @@ authRouter.post('/resend-confirmation-email', async (req, res, next) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *  post:
+ *      description: Send a user a password reset email
+ *      tags:
+ *          - auth
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - email
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                      example:
+ *                          email: "khalidmamdou7@gmail.com"
+ *      responses:
+ *          200:
+ *              description: The password reset email was sent successfully
+ *          404:
+ *              description: User not found
+ *          500:
+ *              description: Internal server error
+ *          422:
+ *              description: Unprocessable entity (invalid email)
+ */
+
+authRouter.post('/forgot-password', async (req, res, next) => {
+    try {
+        const {email} = req.body;
+        const output = await authService.forgotPassword(email);
+        res.json(output);
+    } catch (e) {
+        next(e);
+    }
+});
+
+/**
+ * @swagger
+ * /api/auth/reset-password/{userId}/{token}:
+ *  post:
+ *      description: Reset a user's password
+ *      tags:
+ *          - auth
+ *      parameters:
+ *          - in: path
+ *            name: userId
+ *            description: The user's id
+ *            schema:
+ *              type: string
+ *          - in: path
+ *            name: token
+ *            description: The user's token
+ *            schema:
+ *              type: string
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      required:
+ *                          - password
+ *                      properties:
+ *                          password:
+ *                              type: string
+ *                      example:
+ *                          password: "12345678"
+ *      responses:
+ *          200:
+ *              description: The user's password was reset successfully
+ *          404:
+ *              description: User not found
+ *          422:
+ *              description: Unprocessable entity (invalid password)
+ *          500:
+ *              description: Internal server error
+ */
+
+authRouter.post('/reset-password/:userId/:token', async (req, res, next) => {
+    try {
+        const {userId, token} = req.params;
+        const {password} = req.body;
+        const output = await authService.resetPassword(userId, token, password);
+        res.json(output);
+    } catch (e) {
+        next(e);
+    }
+});
+
 
 module.exports = authRouter;

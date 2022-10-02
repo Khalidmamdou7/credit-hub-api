@@ -1,7 +1,7 @@
 const NotFoundError = require('../errors/not-found.error');
 const ValidationError = require('../errors/validation.error');
 const { getDriver } = require('../neo4j');
-const { sendMatchFoundEmail } = require('../utils/utils');
+const { sendMatchFoundEmail } = require('../utils/mail');
 
 
 const createSwapRequest = async (user, timeslot) => {
