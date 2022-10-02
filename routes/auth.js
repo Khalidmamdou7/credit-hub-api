@@ -192,19 +192,12 @@ authRouter.get('/confirm/:userId/:token', async (req, res, next) => {
  *      description: Resend a user's confirmation email
  *      tags:
  *          - auth
- *      requestBody:
- *          required: true
- *          content:
- *              application/json:
- *                  schema:
- *                      type: object
- *                      required:
- *                          - email
- *                      properties:
- *                          email:
- *                              type: string
- *                      example:
- *                          email: "khalidmamdou7@gmail.com"
+ *      parameters:
+ *          - in: query
+ *            name: email
+ *            description: The user's email
+ *            schema:
+ *              type: string
  *      responses:
  *          200:
  *              description: The confirmation email was sent successfully
@@ -216,7 +209,7 @@ authRouter.get('/confirm/:userId/:token', async (req, res, next) => {
 
 authRouter.post('/resend-confirmation-email', async (req, res, next) => {
     try {
-        const {email} = req.body;
+        const {email} = req.query;
         const output = await authService.resendConfirmationEmail(email);
         res.json(output);
     } catch (e) {

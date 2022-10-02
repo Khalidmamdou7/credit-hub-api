@@ -51,7 +51,7 @@ const register = async (email, plainPassword, name, mobile, program) => {
         sendConfirmationEmail(email, userId, token);
         
         return {
-            message: 'Please check your email to confirm your account'
+            message: `Please check your email to confirm your account. <a href="https://${process.env.DOMAIN}/resend-confirmation-email?email=${email}">Resend confirmation email</a>`
         };
 
     } catch (error) {
@@ -167,7 +167,7 @@ const auth = async (email, plainPassword) => {
         }
 
         if (!res.records[0].get('u').properties.active) {
-            throw new ValidationError('Email not confirmed yet.');
+            throw new ValidationError(`Your email is not confirmed. Check your email or <a href="https://${process.env.DOMAIN}/resend-confirmation-email?email=${email}">Resend the confirmation email</a>.`);
         }
 
         const user = res.records[0].get('u');
