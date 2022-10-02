@@ -116,5 +116,6 @@ const sendMatchFoundEmail = async (email) => {
 module.exports = {
     sendEmail,
     sendConfirmationEmail,
-    sendMatchFoundEmail
+    sendMatchFoundEmail,
+    sendResetPasswordEmail
 };
