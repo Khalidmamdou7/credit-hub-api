@@ -191,6 +191,10 @@ const getSwapRequests = async (user) => {
                 if (sr2 && !swapRequests[sr.id].matches.find(m => m.id === sr2.id)) {
                     swapRequests[sr.id].matches.push({
                         ...sr2,
+                        matchedTimeslots: {
+                            offered: ot.id === matchedTimeslot_1.id ? matchedTimeslot_2 : matchedTimeslot_1,
+                            wanted: ot.id === matchedTimeslot_1.id ? matchedTimeslot_1 : matchedTimeslot_2
+                        },
                         matchedUser: { name: u2.name, email: u2.email }
                     });
                 }

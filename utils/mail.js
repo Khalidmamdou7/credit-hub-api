@@ -124,7 +124,7 @@ const sendMatchFoundEmail = async (email, course, offeredTimeslot, wantedTimeslo
                 <p style="text-align: center; color: #FFFFFF;">You have a match for the course <b>${course.code} - ${course.name} ${offeredTimeslot.type}</b> with <b>${otherUserName}</b>.</p>
                 <p style="text-align: center; color: #FFFFFF;">You offered the timeslot <b>${offeredTimeslot.day} ${offeredTimeslot.startTime} - ${offeredTimeslot.endTime}</b> of group <b>${offeredTimeslot.group}</b> and you wanted the timeslot <b>${wantedTimeslot.day} ${wantedTimeslot.startTime} - ${wantedTimeslot.endTime}</b> of group <b>${wantedTimeslot.group}</b>.</p>
                 <p style="text-align: center; color: #FFFFFF;">You can contact your match at <a href="mailto:${otherUserEmail}" style="text-decoration: none; color: #17A2B8;">${otherUserEmail}</a></p>
-                <p style="text-align: center; color: #FFFFFF;">Once you have agreed on the swap, you can confirm it on the <a href="http://${process.env.CLIENT_URL}/" style="text-decoration: none; color: #17A2B8;">My Swaps</a> page.</p>
+                <p style="text-align: center; color: #FFFFFF;">Once you have agreed on the swap, you can confirm it on the <a href="http://${process.env.CLIENT_URL}/swap" style="text-decoration: none; color: #17A2B8;">My Swaps</a> page.</p>
                 <br>
                 <p style="text-align: center; color: #FFFFFF;">Thank you for using our website</p>
                 <p style="text-align: center; color: #FFFFFF;">The <a href="http://${process.env.CLIENT_URL}" style="text-decoration: none; color: #17A2B8;">Swap Courses</a> team</p>
