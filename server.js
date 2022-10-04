@@ -17,6 +17,43 @@ const errorMiddleware = require('./middleware/error.middleware');
 
 dotenv.config();
 
+// Express status monitor config
+const config = {
+    title: 'API Status',
+    path: '/status',
+    spans: [
+        {
+            interval: 1,
+            retention: 60,
+        },
+        {
+            interval: 5,
+            retention: 60,
+        },
+        {
+            interval: 15,
+            retention: 60,
+        },
+    ],
+    chartVisibility: {
+        cpu: true,
+        mem: true,
+        load: true,
+        responseTime: true,
+        rps: true,
+        statusCodes: true,
+    },
+    healthChecks: [
+        {
+            protocol: 'http',
+            host: process.env.DOMAIN,
+            path: '/api/courses/search/c'
+        },
+    ],
+};
+
+app.use(require('express-status-monitor')(config));
+
 // Swagger
 const options = {
     definition: {
