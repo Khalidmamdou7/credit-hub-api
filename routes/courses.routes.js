@@ -1,6 +1,7 @@
 const coursesRouter = require('express').Router();
 const coursesService = require('../services/courses.services');
 const timeslotsService = require('../services/timeslots.services');
+const passport = require('passport');
 
 /**
  * @swagger
@@ -71,6 +72,8 @@ const timeslotsService = require('../services/timeslots.services');
  *  post:
  *      summary: Creates a new course
  *      tags: [Courses]
+ *      security:
+ *          - BearerAuth: []
  *      requestBody:
  *          required: true
  *          content:
@@ -116,6 +119,8 @@ const timeslotsService = require('../services/timeslots.services');
  *  put:
  *      summary: Update the course with the specified course code
  *      tags: [Courses]
+ *      security:
+ *          - BearerAuth: []
  *      parameters:
  *          - in: path
  *            name: courseCode
@@ -145,6 +150,8 @@ const timeslotsService = require('../services/timeslots.services');
  *  delete:
  *      summary: Remove the course with the specified course code
  *      tags: [Courses]
+ *      security:
+ *          - BearerAuth: []
  *      parameters:
  *          - in: path
  *            name: courseCode
@@ -182,7 +189,7 @@ coursesRouter.get('/:code', async (req, res, next) => {
     }
 });
 
-coursesRouter.post('/', async (req, res, next) => {
+coursesRouter.post('/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const { name } = req.body;
     const code = req.body.code.toUpperCase();
     try {
@@ -193,7 +200,7 @@ coursesRouter.post('/', async (req, res, next) => {
     }
 });
 
-coursesRouter.put('/:code', async (req, res, next) => {
+coursesRouter.put('/:code', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const code = req.params.code.toUpperCase();
     const { name } = req.body;
     try {
@@ -204,7 +211,7 @@ coursesRouter.put('/:code', async (req, res, next) => {
     }
 });
 
-coursesRouter.delete('/:code', async (req, res, next) => {
+coursesRouter.delete('/:code', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const code = req.params.code.toUpperCase();
     try {
         await coursesService.deleteCourse(code);
@@ -306,6 +313,8 @@ coursesRouter.get('/:code/semesters/:semester/timeslots', async (req, res, next)
  *  post:
  *      summary: Add a timeslot to the course with the specified course code in the specified semester
  *      tags: [Timeslots]
+ *      security:
+ *          - BearerAuth: []
  *      parameters:
  *          - in: path
  *            name: courseCode
@@ -345,7 +354,7 @@ coursesRouter.get('/:code/semesters/:semester/timeslots', async (req, res, next)
  *              description: Server error
  */
 
-coursesRouter.post('/:code/semesters/:semester/timeslots/:type', async (req, res, next) => {
+coursesRouter.post('/:code/semesters/:semester/timeslots/:type', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const { code, semester, type } = req.params;
     const { group, day, startTime, endTime } = req.body;
     try {
