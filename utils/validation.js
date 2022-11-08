@@ -69,6 +69,13 @@ const validateProgramCode = (programCode) => {
     return programCode;
 }
 
+const validateProgramName = (programName) => {
+    if (typeof programName !== 'string')
+        throw new ValidationError('Program name must be a string');
+    programName = programName.replace(/[^a-zA-Z0-9 ,-]/g, '');
+    return programName;
+}
+
 
 module.exports = {
     validateCourseCode,
@@ -78,5 +85,6 @@ module.exports = {
     validateDay,
     validateTime,
     validateMobileNumber,
-    validateProgramCode
+    validateProgramCode, 
+    validateProgramName
 }
