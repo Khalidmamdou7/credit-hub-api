@@ -137,6 +137,105 @@ const searchCourses = async (query) => {
     }
 };
 
+const addPrerequisiteCourses = async (code, prerequisiteCodes) => {
+    validateCourseCode(code);
+    prerequisiteCodes.forEach((prerequisiteCode) => {
+        try {
+            validateCourseCode(prerequisiteCode);
+        } catch (error) {
+            // remove invalid prerequisite codes
+            prerequisiteCodes.splice(prerequisiteCodes.indexOf(prerequisiteCode), 1);
+        }
+    });
+
+    if (prerequisiteCodes.length === 0) {
+        throw new ValidationError('No valid prerequisite codes provided');
+    }
+
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.writeTransaction(tx =>
+            tx.run(
+                `MATCH (c:Course {code: $code})
+                MATCH (prerequisite:Course)
+                WHERE prerequisite.code IN $prerequisiteCodes
+                MERGE (c)-[:PREREQUISITE]->(prerequisite)
+                RETURN c, prerequisite`,
+                { code, prerequisiteCodes }
+            )
+        );
+        if (res.records.length === 0) {
+            throw new NotFoundError('Course not found');
+        }
+        const course = res.records[0].get('c').properties;
+        const prerequisites = res.records.map(record => record.get('prerequisite').properties);
+        course.prerequisites = prerequisites;
+        return course;
+    } finally {
+        await session.close();
+    }
+
+};
+
+const removePrerequisiteCourse = async (code, prerequisiteCode) => {
+    validateCourseCode(code);
+    validateCourseCode(prerequisiteCode);
+
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.writeTransaction(tx =>
+            tx.run(
+                `MATCH (c:Course {code: $code})
+                MATCH (p:Course {code: $prerequisiteCode})
+                MATCH (c)-[r:PREREQUISITE]->(p)
+                DELETE r
+                RETURN c, p, r`,
+                { code, prerequisiteCode }
+            )
+        );
+        if (res.records.length === 0) {
+            throw new NotFoundError('Course or Relationship not found');
+        }
+        return res.records[0].get('c').properties;
+    } finally {
+        await session.close();
+    }
+};
+
+const getPrerequisiteCourses = async (code) => {
+    validateCourseCode(code);
+
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        // check if course exists
+        const res = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (c:Course {code: $code})
+                RETURN c`,
+                { code }
+            )
+        );
+        if (res.records.length === 0) {
+            throw new NotFoundError('Course not found');
+        }
+        const res2 = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (c:Course {code: $code})-[:PREREQUISITE]->(p:Course)
+                RETURN p`,
+                { code }
+            )
+        );
+        const course = res.records[0].get('c').properties;
+        const prerequisites = res2.records.map(record => record.get('p').properties);
+        course.prerequisites = prerequisites;
+        return course;
+    } finally {
+        await session.close();
+    }
+};
 
 module.exports = {
     createCourse,
@@ -144,5 +243,8 @@ module.exports = {
     getCourse,
     updateCourse,
     deleteCourse,
-    searchCourses
+    searchCourses,
+    addPrerequisiteCourses,
+    removePrerequisiteCourse,
+    getPrerequisiteCourses
 };

@@ -10,18 +10,41 @@ const passport = require('passport');
  *      Course:
  *          type: object
  *          required:
- *              - courseCode
- *              - courseName
+ *              - code
+ *              - name
  *          properties:
- *              courseCode:
+ *              code:
  *                  type: string
  *                  description: The course code
- *              courseName:
+ *              name:
  *                  type: string
  *                  description: The course name
  *          example:
- *              courseCode: "CMPN301"
- *              courseName: "Computer Architecture"
+ *              code: "CMPN301"
+ *              name: "Computer Architecture"
+ *      CourseWithPrerequisites:
+ *          type: object
+ *          required:
+ *              - code
+ *              - name
+ *              - prerequisites
+ *          properties:
+ *              code:
+ *                  type: string
+ *                  description: The course code
+ *              name:
+ *                  type: string
+ *                  description: The course name
+ *              prerequisites:
+ *                  type: array
+ *                  items:
+ *                      # $ref: '#/components/schemas/Course'
+ *          example:
+ *              code: "CMPN211"
+ *              name: "Microprocessors - II"
+ *              prerequisites:
+ *                  - code: "CMPN201"
+ *                    name: "Microprocessors - I"
  *      Timeslot:
  *          type: object
  *          required:
@@ -360,6 +383,163 @@ coursesRouter.post('/:code/semesters/:semester/timeslots/:type', passport.authen
     try {
         const timeslot = await timeslotsService.createTimeslot(code, semester, type, group, day, startTime, endTime);
         res.json(timeslot);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/courses/{courseCode}/prerequisites:
+ *  get:
+ *      summary: Get the prerequisites of the course with the specified course code
+ *      tags: [Courses, Prerequisites]
+ *      parameters:
+ *          - in: path
+ *            name: courseCode
+ *      schema:
+ *          type: string
+ *          required: true
+ *          description: The course code
+ *      responses:
+ *          200:
+ *              description: The list of prerequisites
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/CourseWithPrerequisites'
+ *          404:
+ *              description: The course was not found
+ *          422:
+ *              description: Validation error (invalid course code)
+ *          500:
+ *              description: Server error
+ */
+
+coursesRouter.get('/:code/prerequisites', async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
+    try {
+        const prerequisites = await coursesService.getPrerequisiteCourses(code);
+        res.json(prerequisites);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/courses/{courseCode}/prerequisites:
+ *  post:
+ *      summary: Add a prerequisite to the course with the specified course code
+ *      tags: [Courses, Prerequisites]
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: courseCode
+ *      schema:
+ *          type: string
+ *          required: true
+ *          description: The course code
+ *      requestBody:
+ *          description: The prerequisite courses codes to add
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          prerequisiteCodes:
+ *                              type: array
+ *                              items:
+ *                                  type: string
+ *                                  description: The prerequisite course codes
+ *                      required:
+ *                          - prerequisiteCodes
+ *      responses:
+ *          201:
+ *              description: The prerequisite was added
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/CourseWithPrerequisites'
+ *          401:
+ *              description: Unauthorized
+ *          404:
+ *              description: The course was not found
+ *          422:
+ *              description: Validation error (invalid course code, invalid prerequisite course code)
+ *          500:
+ *              description: Server error
+ */
+
+coursesRouter.post('/:code/prerequisites', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
+    const { prerequisiteCodes } = req.body;
+    prerequisiteCodes = prerequisiteCodes.map(code => code.toUpperCase());
+
+    if (!Array.isArray(prerequisiteCodes) || prerequisiteCodes.length === 0) {
+        return res.status(422).json({ message: 'Invalid prerequisites: must be an array of at least one course code' });
+    }
+
+    try {
+        const course = await coursesService.addPrerequisiteCourses(code, prerequisiteCodes);
+        res.json(course);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/courses/{courseCode}/prerequisites/{prerequisiteCode}:
+ *  delete:
+ *      summary: Remove a prerequisite from the course with the specified course code
+ *      tags: [Courses, Prerequisites]
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: courseCode
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course code
+ *          - in: path
+ *            name: prerequisiteCode
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The prerequisite course code
+ *      responses:
+ *          200:
+ *              description: The prerequisite was removed
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/Course'
+ *          401:
+ *              description: Unauthorized
+ *          404:
+ *              description: The course was not found
+ *          422:
+ *              description: Validation error (invalid course code, invalid prerequisite course code)
+ *          500:
+ *              description: Server error
+ */
+
+coursesRouter.delete('/:code/prerequisites/:prerequisiteCode', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
+    const prerequisiteCode = req.params.prerequisiteCode.toUpperCase();
+
+    try {
+        const course = await coursesService.removePrerequisiteCourse(code, prerequisiteCode);
+        res.json(course);
     } catch (error) {
         next(error);
     }
