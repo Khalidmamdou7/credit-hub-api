@@ -6,6 +6,7 @@ const validateCourseCode = (code) => {
     if (!regex.test(code)) {
         throw new ValidationError('Invalid course code, must be in the format of CMPN123 or PEN123');
     }
+    return code;
 }
 
 const validateSemester = (semester) => {
@@ -76,6 +77,23 @@ const validateProgramName = (programName) => {
     return programName;
 }
 
+const validateYear = (year) => {
+    if (typeof year !== 'string')
+        throw new ValidationError('Year must be a string');
+    if (!year.match(/^[0-9]{4}$/))
+        throw new ValidationError('Invalid year, must be in the format of 2020');
+    return year;
+}
+
+const validateSemesterSeason = (season) => {
+    if (typeof season !== 'string')
+        throw new ValidationError('Semester season must be a string');
+    season = season.toUpperCase();
+    if (!season.match(/^[FSU]{1,2}$/))
+        throw new ValidationError('Invalid semester season, must be either F or S or SU');
+    return season;
+}
+
 
 module.exports = {
     validateCourseCode,
@@ -86,5 +104,7 @@ module.exports = {
     validateTime,
     validateMobileNumber,
     validateProgramCode, 
-    validateProgramName
+    validateProgramName,
+    validateYear,
+    validateSemesterSeason
 }
