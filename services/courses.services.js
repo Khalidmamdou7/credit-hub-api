@@ -4,9 +4,13 @@ const NotFoundError = require('../errors/not-found.error');
 const { validateCourseCode } = require('../utils/validation');
 
 
-const createCourse = async (code, name) => {
+const createCourse = async (code, name, credits) => {
     validateCourseCode(code);
     name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
+    credits = parseInt(credits);
+    if (isNaN(credits)) {
+        throw new ValidationError('Credits must be a number');
+    }
 
     driver = getDriver();
     const session = driver.session();
@@ -15,10 +19,11 @@ const createCourse = async (code, name) => {
             tx.run(
                 `CREATE (c:Course {
                     code: $code,
-                    name: $name
+                    name: $name,
+                    credits: $credits
                 })
                 RETURN c`,
-                { code, name }
+                { code, name, credits }
             )
         );
         return res.records[0].get('c').properties;
@@ -70,10 +75,14 @@ const getCourse = async (code) => {
     }
 };
 
-const updateCourse = async (code, name) => {
+const updateCourse = async (code, name, credits) => {
     validateCourseCode(code);
     // sanitize name
     name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
+    credits = parseInt(credits);
+    if (isNaN(credits)) {
+        throw new ValidationError('Credits must be a number');
+    }
 
     driver = getDriver();
     const session = driver.session();
@@ -82,8 +91,9 @@ const updateCourse = async (code, name) => {
             tx.run(
                 `MATCH (c:Course {code: $code})
                 SET c.name = $name
+                SET c.credits = $credits
                 RETURN c`,
-                { code, name }
+                { code, name, credits }
             )
         );
         if (res.records.length === 0) {

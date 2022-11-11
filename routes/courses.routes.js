@@ -12,6 +12,7 @@ const passport = require('passport');
  *          required:
  *              - code
  *              - name
+ *              - credits
  *          properties:
  *              code:
  *                  type: string
@@ -19,9 +20,13 @@ const passport = require('passport');
  *              name:
  *                  type: string
  *                  description: The course name
+ *              credits:
+ *                  type: integer
+ *                  description: The number of credits
  *          example:
  *              code: "CMPN301"
  *              name: "Computer Architecture"
+ *              credits: 3
  *      CourseWithPrerequisites:
  *          type: object
  *          required:
@@ -213,10 +218,11 @@ coursesRouter.get('/:code', async (req, res, next) => {
 });
 
 coursesRouter.post('/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
-    const { name } = req.body;
+    const { name, credits } = req.body;
     const code = req.body.code.toUpperCase();
+
     try {
-        const course = await coursesService.createCourse(code, name);
+        const course = await coursesService.createCourse(code, name, credits);
         res.json(course);
     } catch (error) {
         next(error);
@@ -225,7 +231,8 @@ coursesRouter.post('/', passport.authenticate('jwt', {session: false}), async (r
 
 coursesRouter.put('/:code', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const code = req.params.code.toUpperCase();
-    const { name } = req.body;
+    const { name, credits } = req.body;
+
     try {
         const course = await coursesService.updateCourse(code, name);
         res.json(course);
