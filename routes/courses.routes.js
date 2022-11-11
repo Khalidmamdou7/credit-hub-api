@@ -484,8 +484,8 @@ coursesRouter.get('/:code/prerequisites', async (req, res, next) => {
  */
 
 coursesRouter.post('/:code/prerequisites', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
-    const code = req.params.code.toUpperCase();
-    const { prerequisiteCodes } = req.body;
+    let code = req.params.code.toUpperCase();
+    let { prerequisiteCodes } = req.body;
     prerequisiteCodes = prerequisiteCodes.map(code => code.toUpperCase());
 
     if (!Array.isArray(prerequisiteCodes) || prerequisiteCodes.length === 0) {
