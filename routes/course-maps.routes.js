@@ -145,7 +145,7 @@ courseMapsRouter.post('/:id/semesters', passport.authenticate('jwt', { session: 
     }
 
     try {
-        const semester = await courseMapService.addSemesterToCourseMap(req.user, id, semesterYear, semesterSeason);
+        const semester = await courseMapService.addSemesterToCourseMap(req.user, id, semesterSeason, semesterYear);
         res.status(201).json(semester);
     } catch (error) {
         next(error);
