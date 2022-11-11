@@ -234,7 +234,7 @@ coursesRouter.put('/:code', passport.authenticate('jwt', {session: false}), asyn
     const { name, credits } = req.body;
 
     try {
-        const course = await coursesService.updateCourse(code, name);
+        const course = await coursesService.updateCourse(code, name, credits);
         res.json(course);
     } catch (error) {
         next(error);
