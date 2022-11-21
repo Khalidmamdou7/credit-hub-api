@@ -13,6 +13,7 @@ const passport = require('passport');
  *              - code
  *              - name
  *              - credits
+ *              - prerequisiteHours
  *          properties:
  *              code:
  *                  type: string
@@ -23,10 +24,14 @@ const passport = require('passport');
  *              credits:
  *                  type: integer
  *                  description: The number of credits
+ *              prerequisiteHours:
+ *                  type: integer
+ *                  description: The number of prerequisite hours
  *          example:
  *              code: "CMPN301"
  *              name: "Computer Architecture"
  *              credits: 3
+ *              prerequisiteHours: 0
  *      CourseWithPrerequisites:
  *          type: object
  *          required:
@@ -546,6 +551,68 @@ coursesRouter.delete('/:code/prerequisites/:prerequisiteCode', passport.authenti
 
     try {
         const course = await coursesService.removePrerequisiteCourse(code, prerequisiteCode);
+        res.json(course);
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/courses/{courseCode}/prerequisite-hours:
+ *  put:
+ *      summary: Add or update the prerequisite hours of the course with the specified course code
+ *      tags: [Courses, Prerequisites]
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: courseCode
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course code
+ *      requestBody:
+ *          description: The prerequisite credit hours to add
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          prerequisiteHours:
+ *                              type: number
+ *                              description: The prerequisite credit hours
+ *                      required:
+ *                          - prerequisiteHours
+ *      responses:
+ *          201:
+ *              description: The prerequisite credit hours was added
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/Course'
+ *          401:
+ *              description: Unauthorized
+ *          404:
+ *              description: The course was not found
+ *          422:
+ *              description: Validation error (invalid course code, invalid prerequisite credit hours)
+ *          500:
+ *              description: Server error
+ */
+
+coursesRouter.put('/:code/prerequisite-hours', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
+    const code = req.params.code.toUpperCase();
+    const { prerequisiteHours } = req.body;
+
+    if (typeof prerequisiteHours !== 'number') {
+        return res.status(422).json({ message: 'Invalid prerequisite hours: must be a number' });
+    }
+
+    try {
+        const course = await coursesService.updatePrerequisiteHours(code, prerequisiteHours);
         res.json(course);
     } catch (error) {
         next(error);

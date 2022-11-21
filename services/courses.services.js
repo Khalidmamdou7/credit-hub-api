@@ -247,6 +247,33 @@ const getPrerequisiteCourses = async (code) => {
     }
 };
 
+const updatePrerequisiteHours = async (code, prerequisiteHours) => {
+    validateCourseCode(code);
+    
+    if (prerequisiteHours < 0 || prerequisiteHours > 175) {
+        throw new ValidationError('Prerequisite hours must be between 0 and 175');
+    }
+
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.writeTransaction(tx =>
+            tx.run(
+                `MATCH (c:Course {code: $code})
+                SET c.prerequisiteHours = $prerequisiteHours
+                RETURN c`,
+                { code, prerequisiteHours }
+            )
+        );
+        if (res.records.length === 0) {
+            throw new NotFoundError('Course not found');
+        }
+        return res.records[0].get('c').properties;
+    } finally {
+        await session.close();
+    }
+};
+
 module.exports = {
     createCourse,
     getAllCourses,
@@ -256,5 +283,6 @@ module.exports = {
     searchCourses,
     addPrerequisiteCourses,
     removePrerequisiteCourse,
-    getPrerequisiteCourses
+    getPrerequisiteCourses,
+    updatePrerequisiteHours
 };
