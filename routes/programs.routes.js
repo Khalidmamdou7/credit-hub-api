@@ -199,8 +199,12 @@ programsRouter.delete('/:code', async (req, res, next) => {
  *                      properties:
  *                          courseCode:
  *                              type: string
+ *                          courseGroup:
+ *                              type: string
+ *                              description: The course group (e.g. "university-requirements", "college-requirements", "program-requirements", "elective-group-1", "elective-group-2", "elective-group-3", "elective-group-4", "elective-group-5", "elective-group-6", "elective-group-7", "elective-group-8", "elective-group-9", "elective-group-10")
  *                      required:
  *                          - courseCode
+ *                          - courseGroup
  *      responses:
  *          200:
  *              description: The course added to the program
@@ -211,8 +215,11 @@ programsRouter.delete('/:code', async (req, res, next) => {
  */
 
 programsRouter.post('/:code/courses', async (req, res, next) => {
+    let programCode = req.params.code
+    let { courseCode, courseGroup } = req.body
+
     try {
-        const course = await programsService.addCourseToProgram(req.params.code, req.body.courseCode)
+        const course = await programsService.addCourseToProgram(programCode, courseCode, courseGroup)
         res.status(201).json(course)
     } catch (error) {
         next(error)

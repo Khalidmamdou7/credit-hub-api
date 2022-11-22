@@ -1,7 +1,7 @@
 const {getDriver} = require('../neo4j');
 const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
-const {validateCourseCode, validateProgramCode, validateProgramName} = require('../utils/validation');
+const {validateCourseCode, validateProgramCode, validateProgramName, validateCourseGroup} = require('../utils/validation');
 
 
 const addProgram = async (code, name) => {
@@ -118,9 +118,10 @@ const updateProgram = async (code, newCode, newName) => {
     }
 }
 
-const addCourseToProgram = async (programCode, courseCode) => {
+const addCourseToProgram = async (programCode, courseCode, courseGroup) => {
     courseCode = validateCourseCode(courseCode);
     programCode = validateProgramCode(programCode);
+    courseGroup = validateCourseGroup(courseGroup);
 
     driver = getDriver();
     const session = driver.session();
@@ -129,15 +130,19 @@ const addCourseToProgram = async (programCode, courseCode) => {
             tx.run(
                 `MATCH (p:Program {code: $programCode})
                 MATCH (c:Course {code: $courseCode})
-                MERGE (p)-[:REQUIRES]->(c)
-                RETURN p`,
-                {programCode, courseCode}
+                MERGE (p)-[:REQUIRES {courseGroup: $courseGroup}]->(c)
+                RETURN p, c`,
+                {programCode, courseCode, courseGroup}
             )
         );
         if (res.records.length === 0) {
             throw new NotFoundError('Program or course not found');
         }
-        return res.records[0].get('p').properties;
+        const program = res.records[0].get('p').properties;
+        const course = res.records[0].get('c').properties;
+        course.courseGroup = courseGroup;
+        program.addedCourse = course;
+        return program;
     } finally {
         await session.close();
     }
@@ -178,15 +183,19 @@ const getProgramCourses = async (programCode) => {
         const res = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (p:Program {code: $programCode})
-                MATCH (p)-[:REQUIRES]-(c:Course)
-                RETURN c`,
+                MATCH (p)-[r:REQUIRES]-(c:Course)
+                RETURN c, r.courseGroup`,
                 {programCode}
             )
         );
         if (res.records.length === 0) {
             throw new NotFoundError('Program not found');
         }
-        const courses = res.records.map(record => record.get('c').properties);
+        const courses = res.records.map(record => {
+            const course = record.get('c').properties;
+            course.courseGroup = record.get('r.courseGroup') || null;
+            return course;
+        });
         return courses;
     } finally {
         await session.close();

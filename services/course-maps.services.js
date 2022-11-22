@@ -18,8 +18,8 @@ const addCourseMap = async (user, courseMapName, programCode) => {
                     id: randomUUID()
                 })-[:BELONGS_TO]->(p)
                 WITH u, cm, p
-                MATCH (p)-[:REQUIRES]-(c:Course)
-                CREATE (cm)-[:CONTAINS {taken: false, outdegree: size((c)-[:PREREQUISITE]->()) , lastPrereqSemesterOrder: -1}]->(c)
+                MATCH (p)-[r:REQUIRES]-(c:Course)
+                CREATE (cm)-[:CONTAINS {taken: false, outdegree: size((c)-[:PREREQUISITE]->()) , lastPrereqSemesterOrder: -1, group: r.group}]->(c)
                 RETURN u, cm, p`,
                 {userId: user.userId, programCode, courseMapName}
             )
@@ -224,12 +224,17 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 OPTIONAL MATCH (s2)-[:TAKES]->(c:Course)
                 WITH sum(c.creditHours) AS creditHours, cm, s
                 
-                MATCH (c:Course) WHERE c.code IN $coursesCodes AND c.prerequisiteHours <= creditHours
-                RETURN c`,
+                MATCH (cm)-[cont:CONTAINS]->(c:Course)
+                WHERE c.code IN $coursesCodes AND c.prerequisiteHours <= creditHours
+                RETURN c, cont.group`,
                 {userId: user.userId, courseMapId, semesterId, coursesCodes}
             )
         );
-        const availableCourses = res2.records.map(record => record.get('c').properties);
+        const availableCourses = res2.records.map(record => {
+            const course = record.get('c').properties;
+            course.group = record.get('cont.group') || null;
+            return course;
+        });
 
         return availableCourses;
     } finally {
@@ -244,11 +249,16 @@ const getCoursesBySemester = async (user, courseMapId, semesterId) => {
         const res = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (u:User {userId: $userId})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
-                RETURN c`,
+                MATCH (cm)-[cont:CONTAINS]->(c)
+                RETURN c, cont.group`,
                 {userId: user.userId, courseMapId, semesterId}
             )
         );
-        const courses = res.records.map(record => record.get('c').properties);
+        const courses = res.records.map(record => {
+            const course = record.get('c').properties;
+            course.group = record.get('cont.group') || null;
+            return course;
+        });
         return courses;
     } finally {
         await session.close();

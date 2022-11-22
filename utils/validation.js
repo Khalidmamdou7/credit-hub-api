@@ -94,6 +94,14 @@ const validateSemesterSeason = (season) => {
     return season;
 }
 
+const validateCourseGroup = (group) => {
+    if (typeof group !== 'string')
+        throw new ValidationError('Course group must be a string');
+    // remove all non-alphanumeric characters
+    group = group.replace(/[^a-zA-Z0-9]/g, '');
+    return group;
+}
+
 
 module.exports = {
     validateCourseCode,
@@ -106,5 +114,6 @@ module.exports = {
     validateProgramCode, 
     validateProgramName,
     validateYear,
-    validateSemesterSeason
+    validateSemesterSeason,
+    validateCourseGroup
 }
