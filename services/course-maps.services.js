@@ -141,6 +141,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
         if (res2.records.length === 0) {
             throw new ValidationError('Course is already taken or one of its prerequisites is not taken yet');
         }
+        const courseCreditHours = res2.records[0].get('c').properties.credits;
 
         // check if the prerequisite credit hours of the past semesters is equal to or greater than the course's prerequisite credit hours
         const res3 = await session.readTransaction(tx =>
@@ -149,9 +150,9 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
                 MATCH (cm)-[:HAS_SEMESTER]->(s2:Semester)
                 WHERE s2.order < s.order
                 MATCH (s2)-[:TAKES]->(c:Course)
-                WITH sum(c.creditHours) AS creditHours
+                WITH sum(c.credits) AS credits
                 MATCH (cm)-[:CONTAINS]->(c:Course {code: $courseCode})
-                WHERE creditHours >= c.prerequisiteHours
+                WHERE credits >= c.prerequisiteHours
                 RETURN c`,
                 {userId: user.userId, courseMapId, semesterId, courseCode}
             )
@@ -160,37 +161,49 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
             throw new ValidationError('Prerequisite credit hours of the past semesters is less than the course\'s prerequisite credit hours');
         }
 
+        // check if the number of credits taken in this semester is less than or equal to 21
+        const res4 = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
+                RETURN sum(c.credits) AS credits`,
+                {semesterId}
+            )
+        );
+        const semesterCreditHours = res4.records[0].get('credits');
+        console.log("semesterCreditHours before adding course: " + semesterCreditHours);
+        if (semesterCreditHours + courseCreditHours > 21) {
+            throw new ValidationError('Cannot take more than 21 credit hours in a semester');
+        }
+
+
         // add course to semester and update the course's prerequisites outdegree
-        const res4 = await session.writeTransaction(tx =>
+        const resWrite = await session.writeTransaction(tx =>
             tx.run(
                 `MATCH (cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester {id: $semesterId})
                 MATCH (cm)-[cont:CONTAINS]->(c:Course {code: $courseCode})
                 
-                OPTIONAL MATCH (s)-[:TAKES]->(courses:Course)
-
+                
                 OPTIONAL MATCH (c2:Course)-[:PREREQUISITE]->(c)
                 OPTIONAL MATCH (cm)-[cont2:CONTAINS {taken: false}]->(c2)
                 SET cont2.outdegree = cont2.outdegree - 1
                 SET cont2.lastPrereqSemesterOrder = CASE WHEN cont2.lastPrereqSemesterOrder < s.order THEN s.order ELSE cont2.lastPrereqSemesterOrder END
-
-
-                WITH DISTINCT c, s, cm, cont, courses
-
+                
+                
+                WITH DISTINCT c, s, cm, cont
+                
                 CREATE (s)-[:TAKES]->(c)
                 SET cont.taken = true
                 
-                RETURN cm, s, c, courses`,
+                RETURN cm, s, c`,
                 {courseMapId, semesterId, courseCode}
             )
         );
-        if (res4.records.length === 0) {
+        if (resWrite.records.length === 0) {
             throw new NotFoundError('Course could not be added to semester');
         }
 
-        let semester = res4.records[0].get('s').properties;
-        const courses = res4.records[0].get('courses') ? res4.records[0].get('courses').properties : null;
-        const course = res4.records[0].get('c').properties;
-        semester.courses = courses ? [course, courses] : [course];
+        let semester = resWrite.records[0].get('s').properties;
+        semester.addedCourse = resWrite.records[0].get('c').properties;        
 
         return semester;
     }
@@ -230,11 +243,22 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 {userId: user.userId, courseMapId, semesterId, coursesCodes}
             )
         );
-        const availableCourses = res2.records.map(record => {
+        let availableCourses = res2.records.map(record => {
             const course = record.get('c').properties;
             course.group = record.get('cont.group') || null;
             return course;
         });
+
+        // check if the number of credits taken in this semester is less than or equal to 21
+        const res4 = await session.readTransaction(tx =>
+            tx.run(
+                `MATCH (s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
+                RETURN sum(c.credits) AS credits`,
+                {semesterId}
+            )
+        );
+        const semesterCreditHours = res4.records[0].get('credits');
+        availableCourses = availableCourses.filter(course => semesterCreditHours + course.credits <= 21);
 
         return availableCourses;
     } finally {
