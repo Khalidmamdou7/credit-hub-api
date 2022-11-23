@@ -1,16 +1,18 @@
 const { getDriver } = require('../neo4j');
 const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
-const { validateCourseCode } = require('../utils/validation');
+const { validateCourseCode, validateSemesterSeason } = require('../utils/validation');
 
 
-const createCourse = async (code, name, credits) => {
+const createCourse = async (code, name, credits, availableSemesters) => {
     validateCourseCode(code);
     name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
     credits = parseInt(credits);
     if (isNaN(credits)) {
         throw new ValidationError('Credits must be a number');
     }
+    availableSemesters = availableSemesters.map(validateSemesterSeason);
+
 
     driver = getDriver();
     const session = driver.session();
@@ -21,9 +23,10 @@ const createCourse = async (code, name, credits) => {
                     code: $code,
                     name: $name,
                     credits: $credits
+                    availableSemesters: $availableSemesters
                 })
                 RETURN c`,
-                { code, name, credits }
+                { code, name, credits , availableSemesters}
             )
         );
         return res.records[0].get('c').properties;
@@ -75,7 +78,7 @@ const getCourse = async (code) => {
     }
 };
 
-const updateCourse = async (code, name, credits) => {
+const updateCourse = async (code, name, credits, availableSemesters) => {
     validateCourseCode(code);
     // sanitize name
     name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
@@ -83,6 +86,7 @@ const updateCourse = async (code, name, credits) => {
     if (isNaN(credits)) {
         throw new ValidationError('Credits must be a number');
     }
+    availableSemesters = availableSemesters.map(validateSemesterSeason);
 
     driver = getDriver();
     const session = driver.session();
@@ -92,8 +96,9 @@ const updateCourse = async (code, name, credits) => {
                 `MATCH (c:Course {code: $code})
                 SET c.name = $name
                 SET c.credits = $credits
+                SET c.availableSemesters = $availableSemesters
                 RETURN c`,
-                { code, name, credits }
+                { code, name, credits, availableSemesters }
             )
         );
         if (res.records.length === 0) {

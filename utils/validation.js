@@ -4,6 +4,7 @@ const validateCourseCode = (code) => {
     code = code.toUpperCase();
     const regex = /^[A-Z]{2,4}N[0-9]{3}$/;
     if (!regex.test(code)) {
+        console.log(code);
         throw new ValidationError('Invalid course code, must be in the format of CMPN123 or PEN123');
     }
     return code;
@@ -88,9 +89,9 @@ const validateYear = (year) => {
 const validateSemesterSeason = (season) => {
     if (typeof season !== 'string')
         throw new ValidationError('Semester season must be a string');
-    season = season.toUpperCase();
-    if (!season.match(/^[FSU]{1,2}$/))
-        throw new ValidationError('Invalid semester season, must be either F or S or SU');
+    season = season[0].toUpperCase() + season.slice(1).toLowerCase();    
+    if (!season.match(/Fall|Spring|Summer/))
+        throw new ValidationError('Invalid semester season, must be either Fall or Spring or Summer');
     return season;
 }
 

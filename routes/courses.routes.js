@@ -27,11 +27,17 @@ const passport = require('passport');
  *              prerequisiteHours:
  *                  type: integer
  *                  description: The number of prerequisite hours
+ *              availableSemesters:
+ *                  type: array
+ *                  items:
+ *                      type: string
+ *                  description: The available semesters
  *          example:
  *              code: "CMPN301"
  *              name: "Computer Architecture"
  *              credits: 3
  *              prerequisiteHours: 0
+ *              availableSemesters: ["Fall", "Spring"]
  *      CourseWithPrerequisites:
  *          type: object
  *          required:
@@ -225,9 +231,10 @@ coursesRouter.get('/:code', async (req, res, next) => {
 coursesRouter.post('/', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const { name, credits } = req.body;
     const code = req.body.code.toUpperCase();
+    const availableSemesters = req.body.availableSemesters || [];
 
     try {
-        const course = await coursesService.createCourse(code, name, credits);
+        const course = await coursesService.createCourse(code, name, credits, availableSemesters);
         res.json(course);
     } catch (error) {
         next(error);
@@ -237,9 +244,10 @@ coursesRouter.post('/', passport.authenticate('jwt', {session: false}), async (r
 coursesRouter.put('/:code', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const code = req.params.code.toUpperCase();
     const { name, credits } = req.body;
+    const availableSemesters = req.body.availableSemesters || [];
 
     try {
-        const course = await coursesService.updateCourse(code, name, credits);
+        const course = await coursesService.updateCourse(code, name, credits, availableSemesters);
         res.json(course);
     } catch (error) {
         next(error);

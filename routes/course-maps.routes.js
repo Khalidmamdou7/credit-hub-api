@@ -124,7 +124,7 @@ courseMapsRouter.get('/', passport.authenticate('jwt', { session: false }), asyn
  *                          - semesterSeason
  *                      example:
  *                          semesterYear: 2021
- *                          semesterSeason: "F"
+ *                          semesterSeason: "Fall"
  *      responses:
  *          201:
  *              description: The semester added to the course map
