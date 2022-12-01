@@ -250,6 +250,71 @@ courseMapsRouter.post('/:courseMapId/semesters/:semesterId/courses/:courseCode',
 /**
  * @swagger
  * /api/course-maps/{courseMapId}/semesters/{semesterId}/courses:
+ *  post:
+ *      summary: Add multiple courses to a semester
+ *      tags:
+ *          - Course Maps
+ *      security:
+ *          - BearerAuth: []
+ *      parameters:
+ *          - in: path
+ *            name: courseMapId
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course map id
+ *          - in: path
+ *            name: semesterId
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The semester id
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          courseCodes:
+ *                              type: array
+ *                              items:
+ *                                  type: string
+ *                      required:
+ *                          - courseCodes
+ *                      example:
+ *                          courseCodes: ["GENN005", "GENN001"]
+ *      responses:
+ *          200:
+ *              description: The course added to the semester
+ *          401:
+ *              description: Unauthorized
+ *          403:
+ *              description: Forbidden
+ *          500:
+ *              description: Internal server error
+ */
+
+courseMapsRouter.post('/:courseMapId/semesters/:semesterId/courses', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
+    let { courseMapId, semesterId } = req.params;
+    const { courseCodes } = req.body;
+
+    if (!courseCodes) {
+        return res.status(400).json({ error: 'The request body must contain a courseCodes array' });
+    }
+
+    try {
+        const courses = await courseMapService.addCoursesToSemester(req.user, courseMapId, semesterId, courseCodes);
+        res.json(courses);
+    } catch (error) {
+        next(error);
+    }
+});
+
+
+/**
+ * @swagger
+ * /api/course-maps/{courseMapId}/semesters/{semesterId}/courses:
  *  get:
  *      summary: Get all courses for a semester
  *      tags:
