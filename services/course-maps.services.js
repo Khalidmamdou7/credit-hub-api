@@ -83,6 +83,7 @@ const addSemesterToCourseMap = async (user, courseMapId, semesterSeason, semeste
             throw new NotFoundError('Course map not found');
         }
         const semester = res.records[0].get('s').properties;
+        semester.order = semester.order.low;
         return semester;
     }
     finally {
@@ -102,7 +103,11 @@ const getSemesters = async (user, courseMapId) => {
                 {userId: user.userId, courseMapId}
             )
         );
-        const semesters = res.records.map(record => record.get('s').properties);
+        const semesters = res.records.map(record => {
+            const semester = record.get('s').properties;
+            semester.order = semester.order.low;
+            return semester;
+        });
         return semesters;
     } finally {
         await session.close();
