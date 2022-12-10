@@ -70,7 +70,7 @@ const options = {
                 url: 'http://localhost:5312/', 'description': 'Local server'
             },
             {
-                url: 'https://swap-courses-api.herokuapp.com/', 'description': 'Heroku server'
+                url: 'https://' + process.env.DOMAIN + '/', 'description': 'Production server'
             }
         ],
     },
