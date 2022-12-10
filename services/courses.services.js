@@ -22,7 +22,7 @@ const createCourse = async (code, name, credits, availableSemesters) => {
                 `CREATE (c:Course {
                     code: $code,
                     name: $name,
-                    credits: $credits
+                    credits: $credits,
                     availableSemesters: $availableSemesters
                 })
                 RETURN c`,
