@@ -12,6 +12,7 @@ const passport = require('passport');
  *          required:
  *              - name
  *              - programCode
+ *              - startingYear
  *          properties:
  *              name:
  *                  type: string
@@ -19,9 +20,13 @@ const passport = require('passport');
  *              programCode:
  *                  type: string
  *                  description: The program code
+ *              startingYear:
+ *                  type: string
+ *                  description: The starting year of the course map
  *          example:
  *              name: "CCEC Plan A"
  *              programCode: "CCE"
+ *              startingYear: "2019"
  */
 
 /**
@@ -41,7 +46,7 @@ const passport = require('passport');
  *                      $ref: '#/components/schemas/CourseMap'
  *      responses:
  *          201:
- *              description: The course map created
+ *              description: The course map created and returned along with its semesters
  *          401:
  *              description: Unauthorized
  *          403:
@@ -51,14 +56,14 @@ const passport = require('passport');
  */
 
 courseMapsRouter.post('/', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
-    let { name, programCode } = req.body;
+    let { name, programCode, startingYear } = req.body;
 
-    if (!name || !programCode) {
-        return res.status(400).json({ error: 'Missing one or more of required fields: name, programCode' });
+    if (!name || !programCode || !startingYear) {
+        return res.status(400).json({ error: 'Missing one or more of required fields: name, programCode, startingYear' });
     }
 
     try {
-        const courseMap = await courseMapService.addCourseMap(req.user, name, programCode);
+        const courseMap = await courseMapService.addCourseMap(req.user, name, programCode, startingYear);
         res.status(201).json(courseMap);
     } catch (error) {
         next(error);

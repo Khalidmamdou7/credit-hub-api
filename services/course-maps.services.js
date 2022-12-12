@@ -3,8 +3,10 @@ const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
 const {validateCourseCode, validateProgramCode, validateYear, validateSemesterSeason} = require('../utils/validation');
 
-const addCourseMap = async (user, courseMapName, programCode) => {
+const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
     programCode = validateProgramCode(programCode);
+    startingYear = validateYear(startingYear);
+    startingYear = parseInt(startingYear);
 
     driver = getDriver();
     const session = driver.session();
@@ -30,6 +32,15 @@ const addCourseMap = async (user, courseMapName, programCode) => {
         const program = res.records[0].get('p').properties;
         const courseMap = res.records[0].get('cm').properties;
         courseMap.program = program;
+        
+        // generate semesters for course map for 5 years
+        courseMap.semesters = [];
+        for (let i = 0; i < 5; i++) {
+            const fallSemester = await addSemesterToCourseMap(user, courseMap.id, 'Fall', (startingYear + i).toString());
+            const springSemester = await addSemesterToCourseMap(user, courseMap.id, 'Spring', (startingYear + i + 1).toString());
+            const summerSemester = await addSemesterToCourseMap(user, courseMap.id, 'Summer', (startingYear + i + 1).toString());
+            courseMap.semesters = [...courseMap.semesters, fallSemester, springSemester, summerSemester];
+        }
         return courseMap;
     } catch (error) {
         if (error.code === 'Neo.ClientError.Schema.ConstraintValidationFailed') {
