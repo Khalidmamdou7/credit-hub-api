@@ -61,9 +61,9 @@ const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Swap Courses API',
+            title: 'Credit Hub API',
             version: '1.0.0',
-            description: 'A simple Express API for Swap Courses',
+            description: 'The backend API for the Credit Hub application',
         },
         servers: [
             {
