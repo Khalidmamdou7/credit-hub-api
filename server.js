@@ -19,42 +19,6 @@ const errorMiddleware = require('./middleware/error.middleware');
 
 dotenv.config();
 
-// Express status monitor config
-const config = {
-    title: 'API Status',
-    path: '/status',
-    spans: [
-        {
-            interval: 1,
-            retention: 60,
-        },
-        {
-            interval: 5,
-            retention: 60,
-        },
-        {
-            interval: 15,
-            retention: 60,
-        },
-    ],
-    chartVisibility: {
-        cpu: true,
-        mem: true,
-        load: true,
-        responseTime: true,
-        rps: true,
-        statusCodes: true,
-    },
-    healthChecks: [
-        {
-            protocol: 'http',
-            host: process.env.DOMAIN,
-            path: '/api/courses/search/c'
-        },
-    ],
-};
-
-app.use(require('express-status-monitor')(config));
 
 // Swagger
 const options = {
@@ -62,7 +26,7 @@ const options = {
         openapi: '3.0.0',
         info: {
             title: 'Credit Hub API',
-            version: '1.0.0',
+            version: '2.0.0',
             description: 'The backend API for the Credit Hub application',
         },
         servers: [
