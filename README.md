@@ -30,7 +30,7 @@ To run the API locally, you need to have Node.js. You can download [Node.js](htt
 
 ```bash
 git clone
-cd swap-courses-api
+cd credit-hub-api
 npm install
 ```
 
