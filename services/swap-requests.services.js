@@ -2,6 +2,8 @@ const NotFoundError = require('../errors/not-found.error');
 const ValidationError = require('../errors/validation.error');
 const { getDriver } = require('../neo4j');
 const { sendMatchFoundEmail } = require('../utils/mail');
+const validation = require('../utils/validation');
+
 
 
 const createSwapRequest = async (user, timeslot) => {
@@ -144,14 +146,14 @@ const getSwapRequests = async (user) => {
         const res = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest)
-                MATCH (sr)-[:OFFERS]->(ot:Timeslot)
+                MATCH (sr)-[:OFFERS]->(ot:Timeslot)-[:OFFERED_IN]->(sem:Semester)
                 MATCH (sr)-[:WANTS]->(wt:Timeslot)
                 MATCH (ot)-[:OFFERED_AT]-(c:Course)
                 OPTIONAL MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest)
                 OPTIONAL MATCH (matchedTimeslot_1:Timeslot {id: m.timeslot_1})
                 OPTIONAL MATCH (matchedTimeslot_2:Timeslot {id: m.timeslot_2})
                 OPTIONAL MATCH (sr2)<-[:REQUESTED]-(u2:User)
-                RETURN sr, ot, wt, sr2, u2, c, matchedTimeslot_1, matchedTimeslot_2`,
+                RETURN sr, sem, ot, wt, sr2, u2, c, matchedTimeslot_1, matchedTimeslot_2`,
                 { userId: user.userId }
         ));
         // for each swap request, get the offered and wanted timeslots. if there are duplicates swap requests,
@@ -159,6 +161,7 @@ const getSwapRequests = async (user) => {
         const swapRequests = {};
         res.records.forEach(record => {
             const sr = record.get('sr').properties;
+            const sem = record.get('sem').properties;
             const ot = record.get('ot').properties;
             const wt = record.get('wt').properties;
             const c = record.get('c').properties;
@@ -169,6 +172,7 @@ const getSwapRequests = async (user) => {
             if (!swapRequests[sr.id]) {
                 swapRequests[sr.id] = {
                     ...sr,
+                    semester: sem.name,
                     offeredTimeslot: ot,
                     wantedTimeslots: [wt],
                     course: c,
@@ -360,19 +364,21 @@ const disagreeToSwapRequest = async (user, swapRequestId, rejectedSwapRequestId)
     }
 }
 
-const getSwapRequestsByCourse = async (courseCode) => {
-    courseCode = courseCode.toUpperCase();
+const getSwapRequestsByCourseAndSemester = async (courseCode, semester) => {
+    courseCode = validation.validateCourseCode(courseCode);
+    semester = validation.validateSemester(semester);
+
     const driver = getDriver();
     const session = driver.session();
     try {
         const res = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (sr:SwapRequest)-[:WANTS]-(wt:Timeslot)-[:OFFERED_AT]-(c:Course {code: $courseCode})
-                MATCH (sr)-[:OFFERS]-(ot:Timeslot)
+                MATCH (sr)-[:OFFERS]-(ot:Timeslot)-[:OFFERED_IN]-(s:Semester {name: $semester})
                 MATCH (sr)-[:REQUESTED]-(u:User)
                 WHERE sr.status = 'pending'
                 RETURN sr, ot, wt, u`,
-                { courseCode }
+                { courseCode , semester }
             )
         );
         // for each swap request, get the offered and wanted timeslots. if there are multiples wanted time slots,
@@ -416,5 +422,5 @@ module.exports = {
     deleteSwapRequest,
     agreeSwapRequest,
     disagreeToSwapRequest,
-    getSwapRequestsByCourse
+    getSwapRequestsByCourseAndSemester
 };

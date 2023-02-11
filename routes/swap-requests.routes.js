@@ -60,6 +60,7 @@ const passport = require('passport');
  *              - wantedTimeslots
  *              - offeredTimeslot
  *              - status
+ *              - semester
  *              - createdAt
  *              - updatedAt
  *          properties:
@@ -74,6 +75,8 @@ const passport = require('passport');
  *                  type:
  *                      $ref: '#/components/schemas/SwapRequestTimeslot'
  *              status:
+ *                  type: string
+ *              semester:
  *                  type: string
  *              createdAt:
  *                  type: object
@@ -106,6 +109,7 @@ const passport = require('passport');
  *                      code: "CMPN203"
  *                      name: "Software Engineering"
  *              status: "pending"
+ *              semester: "F22"
  *              createdAt:
  *                  $date: 1611234567890
  *              updatedAt:
@@ -378,7 +382,7 @@ swapRequestsRouter.post('/:id/disagree/', passport.authenticate('jwt', {session:
 
 /**
  * @swagger
- * /api/swap-requests/courses/{courseCode}:
+ * /api/swap-requests/semesters/{semesterName}/courses/{courseCode}:
  *  get:
  *      description: Get all swap requests for a course
  *      tags:
@@ -390,6 +394,12 @@ swapRequestsRouter.post('/:id/disagree/', passport.authenticate('jwt', {session:
  *              type: string
  *              required: true
  *              description: The course code
+ *          -  in: path
+ *             name: semesterName
+ *             schema:
+ *              type: string
+ *              required: true
+ *              description: The semester name (should be in the format of "X2Y" where X is (F/S/SU) and Y is the year (e.g. F20, S21)
  *      responses:
  *          200:
  *              description: Success
@@ -405,9 +415,11 @@ swapRequestsRouter.post('/:id/disagree/', passport.authenticate('jwt', {session:
  *              description: Unprocessable entity
  */
 
-swapRequestsRouter.get('/courses/:courseCode', async (req, res, next) => {
+swapRequestsRouter.get('/semesters/:semesterName/courses/:courseCode', async (req, res, next) => {
     try {
-        const swapRequests = await swapRequestsService.getSwapRequestsByCourse(req.params.courseCode);
+        let semesterName = req.params.semesterName;
+        let courseCode = req.params.courseCode;
+        const swapRequests = await swapRequestsService.getSwapRequestsByCourseAndSemester(courseCode, semesterName);
         res.json(swapRequests);
     } catch (err) {
         next(err);

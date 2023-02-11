@@ -17,6 +17,8 @@ const validateSemester = (semester) => {
     semester = semester.toUpperCase();
     if (!semester.match(/^[FSU]{1,2}\d{2}$/))
         throw new ValidationError('Invalid semester format, must be in the format of F22 or S23 or SU23');
+    
+    return semester;
 }
 
 const validateTimeslotType = (type) => {
