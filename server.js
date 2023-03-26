@@ -14,6 +14,7 @@ const coursesRouter = require('./routes/courses.routes');
 const swapRequestsRouter = require('./routes/swap-requests.routes');
 const programsRouter = require('./routes/programs.routes');
 const courseMapsRouter = require('./routes/course-maps.routes');
+const scheduleRouter = require('./routes/schedule.routes');
 
 const errorMiddleware = require('./middleware/error.middleware');
 
@@ -71,6 +72,7 @@ app.use('/api/courses', coursesRouter);
 app.use('/api/swap-requests', swapRequestsRouter);
 app.use('/api/programs', programsRouter);
 app.use('/api/course-maps', courseMapsRouter);
+app.use('/api/schedule', scheduleRouter);
 
 app.use(errorMiddleware);
 
