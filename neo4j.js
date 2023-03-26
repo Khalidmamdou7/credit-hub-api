@@ -12,7 +12,7 @@ const initDriver = (uri, username, password) => {
         return driver
     }).catch((err) => {
         console.log('Error connecting to Neo4j', err)
-        throw err
+        // throw err
     })
 }
 
