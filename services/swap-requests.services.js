@@ -57,7 +57,7 @@ const createSwapRequest = async (user, timeslot) => {
 
         const res3 = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})
+                `MATCH (u:User {email: $userEmail})
                 MATCH (ot:Timeslot)
                 WHERE ot.id = $offeredTimeslotId
                 CREATE (sr:SwapRequest 
@@ -69,7 +69,7 @@ const createSwapRequest = async (user, timeslot) => {
                 WHERE wt.id IN $wantedTimeslotIds
                 CREATE (sr)-[:WANTS]->(wt)
                 RETURN sr, ot, wt`,
-                { userId: user.userId, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
+                { userEmail: user.email, offeredTimeslotId: offeredTimeslot , wantedTimeslotIds: wantedTimeslots }
         ));
 
         const endTime = Date.now();
@@ -101,7 +101,7 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
 
     const res = await dbSession.writeTransaction(tx =>
         tx.run(
-            `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+            `MATCH (u:User {email: $userEmail})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
             MATCH (sr)-[:OFFERS]->(ot:Timeslot)
             MATCH (sr)-[:WANTS]->(wt:Timeslot)
             MATCH (ot)-[:OFFERED_AT]-(c:Course)
@@ -114,7 +114,7 @@ const checkSwapRequestMatches = async (dbSession, user, swapRequestId) => {
             SET sr2.status = 'waiting-for-agreement'
             CREATE (sr)-[m:MATCHES {status: 'waiting-for-agreement', timeslot_1: ot.id, timeslot_2: wt.id}]->(sr2)
             RETURN sr, sr2, u2, m, ot, wt, c, u.email`,
-            { userId: user.userId, swapRequestId }
+            { userEmail: user.email, swapRequestId }
         )
     );
     const endTime = Date.now();
@@ -145,7 +145,7 @@ const getSwapRequests = async (user) => {
         // if a swap request status is waiting-for-agreement, return the matching users too
         const res = await session.readTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest)
+                `MATCH (u:User {email: $userEmail})-[:REQUESTED]->(sr:SwapRequest)
                 MATCH (sr)-[:OFFERS]->(ot:Timeslot)-[:OFFERED_IN]->(sem:Semester)
                 MATCH (sr)-[:WANTS]->(wt:Timeslot)
                 MATCH (ot)-[:OFFERED_AT]-(c:Course)
@@ -154,7 +154,7 @@ const getSwapRequests = async (user) => {
                 OPTIONAL MATCH (matchedTimeslot_2:Timeslot {id: m.timeslot_2})
                 OPTIONAL MATCH (sr2)<-[:REQUESTED]-(u2:User)
                 RETURN sr, sem, ot, wt, sr2, u2, c, matchedTimeslot_1, matchedTimeslot_2`,
-                { userId: user.userId }
+                { userEmail: user.email }
         ));
         // for each swap request, get the offered and wanted timeslots. if there are duplicates swap requests,
         // then the offered and wanted timeslots will be duplicated as well. so we need to group them by swap request id
@@ -222,7 +222,7 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
     try {
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+                `MATCH (u:User {email: $userEmail})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
                 MATCH (wantedTimeslots:Timeslot) WHERE wantedTimeslots.id IN $wantedTimeslots
                 MATCH (offeredTimeslot:Timeslot) WHERE offeredTimeslot.id = $offeredTimeslot
                 SET sr.updatedAt = datetime()
@@ -231,7 +231,7 @@ const updateSwapRequest = async (user, timeslotId, timeslot) => {
                 CREATE (sr)-[w:WANTS]->(wantedTimeslots)
                 CREATE (sr)-[o:OFFERS]->(offeredTimeslot)
                 RETURN sr, w, o`,
-                { userId: user.userId, swapRequestId: timeslotId, wantedTimeslots, offeredTimeslot }
+                { userEmail: user.email, swapRequestId: timeslotId, wantedTimeslots, offeredTimeslot }
             )
         );
         const sr = res.records[0].get('sr').properties;
@@ -260,7 +260,7 @@ const agreeSwapRequest = async (user, swapRequestId, matchedSwapRequestId) => {
         // if there is a multiple matched swap requests, then the other matched swap requests will be deleted and set to 'pending'.
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+                `MATCH (u:User {email: $userEmail})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
                 MATCH (sr)-[m1:MATCHES]-(sr2:SwapRequest {id: $matchedSwapRequestId})
                 MATCH (sr)-[:OFFERS]->(ot:Timeslot)
                 MATCH (sr)-[:WANTS]->(wt:Timeslot)
@@ -277,7 +277,7 @@ const agreeSwapRequest = async (user, swapRequestId, matchedSwapRequestId) => {
                 WHERE sr4 <> sr
                 SET sr4.status = CASE WHEN m3.status IS NULL THEN 'pending' ELSE sr3.status END
                 RETURN sr, ot, wt, sr2, ot2, wt2, m1`,
-                { userId: user.userId, swapRequestId, matchedSwapRequestId }
+                { userEmail: user.email, swapRequestId, matchedSwapRequestId }
             )
         );
 
@@ -316,12 +316,12 @@ const deleteSwapRequest = async (user, swapRequestId) => {
         // if a swap request status is waiting-for-agreement, set the status of the matching swap request to pending
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+                `MATCH (u:User {email: $userEmail})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
                 OPTIONAL MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest)
                 OPTIONAL MATCH (sr2)-[m2:MATCHES]-(sr3:SwapRequest)
                 SET sr2.status = CASE WHEN m2 IS NULL THEN 'pending' ELSE sr2.status END
                 DETACH DELETE sr RETURN count(sr)`,
-                { userId: user.userId, swapRequestId }
+                { userEmail: user.email, swapRequestId }
             )
         );
         if (res.records[0].get(0).low === 0) {
@@ -340,7 +340,7 @@ const disagreeToSwapRequest = async (user, swapRequestId, rejectedSwapRequestId)
     try {
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
+                `MATCH (u:User {email: $userEmail})-[:REQUESTED]->(sr:SwapRequest {id: $swapRequestId})
                 MATCH (sr)-[m:MATCHES]-(sr2:SwapRequest {id: $rejectedSwapRequestId})
                 DELETE m
                 SET sr.status = 'pending'
@@ -348,7 +348,7 @@ const disagreeToSwapRequest = async (user, swapRequestId, rejectedSwapRequestId)
                 OPTIONAL MATCH (sr2)-[m2:MATCHES]-(sr3:SwapRequest)
                 SET sr2.status = CASE WHEN m2 IS NULL THEN 'pending' ELSE sr2.status END
                 RETURN sr`,
-                { userId: user.userId, swapRequestId, rejectedSwapRequestId }
+                { userEmail: user.email, swapRequestId, rejectedSwapRequestId }
             )
         );
         if (res.records.length === 0) {

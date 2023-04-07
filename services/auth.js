@@ -76,7 +76,7 @@ const confirmEmail = async (userId, token) => {
     try {
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})
+                `MATCH (u:User {email: $userEmail})
                 SET u.active = true
                 RETURN u`,
                 { userId }
@@ -234,7 +234,7 @@ const resetPassword = async (userId, plainPassword) => {
     try {
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (u:User {userId: $userId})
+                `MATCH (u:User {email: $userEmail})
                 SET u.password = $password
                 RETURN u`,
                 { userId, password: encrypted }
@@ -262,9 +262,9 @@ const resetPassword = async (userId, plainPassword) => {
 
 
 const userToClaims = (user) => {
-    const { name, userId } = user
+    const { name, userId, email } = user;
 
-    return { sub: userId, userId, name, }
+    return { sub: userId, userId, name, email };
 }
 
 
