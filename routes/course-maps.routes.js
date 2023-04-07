@@ -7,7 +7,7 @@ const passport = require('passport');
  * @swagger
  * components:
  *  schemas:
- *      CourseMap:
+ *      CourseMapRequest:
  *          type: object
  *          required:
  *              - name
@@ -25,8 +25,77 @@ const passport = require('passport');
  *                  description: The starting year of the course map
  *          example:
  *              name: "CCEC Plan A"
- *              programCode: "CCE"
+ *              programCode: "CCEC"
  *              startingYear: "2019"
+ *      CourseMapSemesterResponse:
+ *          type: object
+ *          required:
+ *              - id
+ *              - year
+ *              - season
+ *              - semesterOrder
+ *          properties:
+ *              id:
+ *                  type: string
+ *                  description: The semester id (UUID)
+ *              year:
+ *                  type: integer
+ *                  description: The semester year (2021, 2022, etc.)
+ *              season:
+ *                  type: string
+ *                  description: The semester season (Fall, Spring, Summer)
+ *              semesterOrder:
+ *                  type: integer
+ *                  description: The semester order (1, 2, 3, etc.)
+ *          example:
+ *              id: "2d9da056-e6ac-4c8a-b425-6940b7ca0ee1"
+ *              year: 2021
+ *              season: "Fall"
+ *              semesterOrder: 1
+ *      CourseMapResponse:
+ *          type: object
+ *          required:
+ *              - id
+ *              - name
+ *              - program
+ *              - semesters
+ *          properties:
+ *              id:
+ *                  type: string
+ *                  description: The course map id
+ *              name:
+ *                  type: string
+ *                  description: The course map name
+ *              program:
+ *                  type: object
+ *                  properties:
+ *                      code:
+ *                          type: string
+ *                          description: The program code
+ *                      name:
+ *                          type: string
+ *                          description: The program name
+ *              semesters:
+ *                  type: array
+ *                  description: The semesters in the course map (in order)
+ *                  items:
+ *                      $ref: '#/components/schemas/CourseMapSemesterResponse'
+ *          example:
+ *              id: "a970a2b3-0607-49a3-8d5c-3d99c2eec836"
+ *              name: "CCEC Plan A"
+ *              program:
+ *                  code: "CCEC"
+ *                  name: "Communication and Computer Engineering - Track C"
+ *              semesters:
+ *                  - id: "2d9da056-e6ac-4c8a-b425-6940b7ca0ee1"
+ *                    year: 2021
+ *                    season: "Fall"
+ *                    semesterOrder: 1
+ *                  - id: "asdda056-e6ac-4c8a-b425-6940b7cavsa1"
+ *                    year: 2022
+ *                    season: "Spring"
+ *                    semesterOrder: 2
+ * 
  */
 
 /**
@@ -43,10 +112,14 @@ const passport = require('passport');
  *          content:
  *              application/json:
  *                  schema:
- *                      $ref: '#/components/schemas/CourseMap'
+ *                      $ref: '#/components/schemas/CourseMapRequest'
  *      responses:
  *          201:
  *              description: The course map created and returned along with its semesters
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/CourseMapResponse'
  *          401:
  *              description: Unauthorized
  *          403:
