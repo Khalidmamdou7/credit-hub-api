@@ -13,17 +13,44 @@ const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
     try {
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `MATCH (p:Program {code: $programCode})
+                `
+                MATCH (p:Program {code: $programCode})
                 MATCH (u:User {email: $userEmail})
                 CREATE (u)-[:CREATED]->(cm:CourseMap {
                     name: $courseMapName,
                     id: randomUUID()
                 })-[:BELONGS_TO]->(p)
                 WITH u, cm, p
+
                 MATCH (p)-[r:REQUIRES]-(c:Course)
-                CREATE (cm)-[:CONTAINS {taken: false, outdegree: size((c)-[:PREREQUISITE]->()) , lastPrereqSemesterOrder: -1, group: r.group}]->(c)
-                RETURN u, cm, p`,
-                {userEmail: user.email, programCode, courseMapName}
+                CREATE (cm)-[:CONTAINS {taken: false, outdegree: size((c)-[:PREREQUISITE]->()) , lastPrereqSemesterOrder: -1}]->(c)
+                with DISTINCT u, cm, p
+
+                // generate semesters for course map for 5 years
+                FOREACH (i IN range(0, 4) |
+                    CREATE (cm)-[:HAS_SEMESTER]->(sF:Semester {
+                        season: 'Fall',
+                        year: $startingYear + i,
+                        order: 3*i+1, 
+                        id: randomUUID()
+                    })
+                    CREATE (cm)-[:HAS_SEMESTER]->(sS:Semester {
+                        season: 'Spring',
+                        year: $startingYear + i + 1,
+                        order: 3*i+2, 
+                        id: randomUUID()
+                    })
+                    CREATE (cm)-[:HAS_SEMESTER]->(sSU:Semester {
+                        season: 'Summer',
+                        year: $startingYear + i + 1,
+                        order: 3*i+3, 
+                        id: randomUUID()
+                    }))
+                WITH u, cm, p
+                MATCH (cm)-[:HAS_SEMESTER]->(s:Semester)
+                WITH DISTINCT u, cm, p, s order by s.order
+                RETURN u, cm, p, collect(s) as semesters`,
+                {userEmail: user.email, programCode, courseMapName, startingYear}
             )
         );
         if (res.records.length === 0) {
@@ -32,15 +59,11 @@ const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
         const program = res.records[0].get('p').properties;
         const courseMap = res.records[0].get('cm').properties;
         courseMap.program = program;
+        courseMap.semesters = res.records[0].get('semesters').map(semester => {
+            semester.properties.order = semester.properties.order.low;
+            return semester.properties;
+        })
         
-        // generate semesters for course map for 5 years
-        courseMap.semesters = [];
-        for (let i = 0; i < 5; i++) {
-            const fallSemester = await addSemesterToCourseMap(user, courseMap.id, 'Fall', (startingYear + i).toString());
-            const springSemester = await addSemesterToCourseMap(user, courseMap.id, 'Spring', (startingYear + i + 1).toString());
-            const summerSemester = await addSemesterToCourseMap(user, courseMap.id, 'Summer', (startingYear + i + 1).toString());
-            courseMap.semesters = [...courseMap.semesters, fallSemester, springSemester, summerSemester];
-        }
         return courseMap;
     } catch (error) {
         if (error.code === 'Neo.ClientError.Schema.ConstraintValidationFailed') {
