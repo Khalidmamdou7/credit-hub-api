@@ -1,7 +1,7 @@
-const {getDriver} = require('../neo4j');
+const { getDriver } = require('../neo4j');
 const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
-const {validateCourseCode, validateProgramCode, validateYear, validateSemesterSeason} = require('../utils/validation');
+const { validateCourseCode, validateProgramCode, validateYear, validateSemesterSeason } = require('../utils/validation');
 
 const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
     programCode = validateProgramCode(programCode);
@@ -50,7 +50,7 @@ const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
                 MATCH (cm)-[:HAS_SEMESTER]->(s:Semester)
                 WITH DISTINCT u, cm, p, s order by s.order
                 RETURN u, cm, p, collect(s) as semesters`,
-                {userEmail: user.email, programCode, courseMapName, startingYear}
+                { userEmail: user.email, programCode, courseMapName, startingYear }
             )
         );
         if (res.records.length === 0) {
@@ -63,7 +63,7 @@ const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
             semester.properties.order = semester.properties.order.low;
             return semester.properties;
         })
-        
+
         return courseMap;
     } catch (error) {
         if (error.code === 'Neo.ClientError.Schema.ConstraintValidationFailed') {
@@ -83,7 +83,7 @@ const getCourseMaps = async (user) => {
             tx.run(
                 `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap)-[:BELONGS_TO]->(p:Program)
                 RETURN cm, p`,
-                {userEmail: user.email}
+                { userEmail: user.email }
             )
         );
         const courseMaps = res.records.map(record => {
@@ -101,7 +101,7 @@ const getCourseMaps = async (user) => {
 const addSemesterToCourseMap = async (user, courseMapId, semesterSeason, semesterYear) => {
     semesterSeason = validateSemesterSeason(semesterSeason);
     semesterYear = validateYear(semesterYear);
-    
+
     driver = getDriver();
     const session = driver.session();
     try {
@@ -115,7 +115,7 @@ const addSemesterToCourseMap = async (user, courseMapId, semesterSeason, semeste
                     id: randomUUID()
                 })
                 RETURN cm, s`,
-                {userEmail: user.email, courseMapId, semesterSeason, semesterYear}
+                { userEmail: user.email, courseMapId, semesterSeason, semesterYear }
             )
         );
         if (res.records.length === 0) {
@@ -140,7 +140,7 @@ const getSemesters = async (user, courseMapId, includeCourses) => {
                     `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester)
                     RETURN s
                     ORDER BY s.order`,
-                    {userEmail: user.email, courseMapId}
+                    { userEmail: user.email, courseMapId }
                 )
             );
             const semesters = res.records.map(record => {
@@ -153,16 +153,24 @@ const getSemesters = async (user, courseMapId, includeCourses) => {
             const res = await session.readTransaction(tx =>
                 tx.run(
                     `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester)
-                    OPTIONAL MATCH (s)-[:CONTAINS]->(c:Course)
-                    RETURN s, collect(c) as courses
+                    OPTIONAL MATCH (s)-[:TAKES]->(c:Course)
+                    OPTIONAL MATCH (cm)-[contain:CONTAINS]->(c)
+                    RETURN s, collect({course: c, group: contain.group}) as courses
                     ORDER BY s.order`,
-                    {userEmail: user.email, courseMapId}
+                    { userEmail: user.email, courseMapId }
                 )
             );
             const semesters = res.records.map(record => {
                 const semester = record.get('s').properties;
                 semester.order = semester.order.low;
-                semester.courses = record.get('courses').map(course => course.properties);
+                semester.courses = record.get('courses').map(courseNode => {                    
+                    if (courseNode.course === null) {
+                        return null;
+                    }
+                    let course = courseNode.course.properties;
+                    course.group = courseNode.group;
+                    return course;
+                });
                 return semester;
             });
             return semesters;
@@ -183,7 +191,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
             tx.run(
                 `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:CONTAINS]->(c:Course {code: $courseCode})
                 RETURN c`,
-                {userEmail: user.email, courseMapId, courseCode}
+                { userEmail: user.email, courseMapId, courseCode }
             )
         );
         if (res.records.length === 0) {
@@ -198,7 +206,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
                 MATCH (cm)-[cont:CONTAINS {taken: false , outdegree: 0}]->(c:Course {code: $courseCode})
                 WHERE cont.lastPrereqSemesterOrder < s.order
                 RETURN c`,
-                {userEmail: user.email, courseMapId, semesterId, courseCode}
+                { userEmail: user.email, courseMapId, semesterId, courseCode }
             )
         );
         if (res2.records.length === 0) {
@@ -217,7 +225,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
                 MATCH (cm)-[:CONTAINS]->(c:Course {code: $courseCode})
                 WHERE credits >= c.prerequisiteHours
                 RETURN c`,
-                {userEmail: user.email, courseMapId, semesterId, courseCode}
+                { userEmail: user.email, courseMapId, semesterId, courseCode }
             )
         );
         if (res3.records.length === 0) {
@@ -229,7 +237,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
             tx.run(
                 `MATCH (s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
                 RETURN sum(c.credits) AS credits`,
-                {semesterId}
+                { semesterId }
             )
         );
         const semesterCreditHours = res4.records[0].get('credits');
@@ -258,7 +266,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
                 SET cont.taken = true
                 
                 RETURN cm, s, c`,
-                {courseMapId, semesterId, courseCode}
+                { courseMapId, semesterId, courseCode }
             )
         );
         if (resWrite.records.length === 0) {
@@ -266,7 +274,7 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
         }
 
         let semester = resWrite.records[0].get('s').properties;
-        semester.addedCourse = resWrite.records[0].get('c').properties;        
+        semester.addedCourse = resWrite.records[0].get('c').properties;
 
         return semester;
     }
@@ -281,7 +289,7 @@ const areCoursesInCourseMap = async (session, courseMapId, courseCodes) => {
             `MATCH (cm:CourseMap {id: $courseMapId})-[:CONTAINS]->(c:Course)
             WHERE c.code IN $courseCodes
             RETURN c`,
-            {courseMapId, courseCodes}
+            { courseMapId, courseCodes }
         )
     );
     if (res.records.length !== courseCodes.length) {
@@ -298,7 +306,7 @@ const areCoursesPrereqsTaken = async (session, courseMapId, semesterId, courseCo
             MATCH (cm)-[cont:CONTAINS {taken: false , outdegree: 0}]->(c:Course)
             WHERE cont.lastPrereqSemesterOrder < s.order
             RETURN c`,
-            {courseMapId, semesterId, courseCodes}
+            { courseMapId, semesterId, courseCodes }
         )
     );
     if (res2.records.length !== courseCodes.length) {
@@ -318,7 +326,7 @@ const areCoursesPrereqCreditHoursMet = async (session, courseMapId, semesterId, 
             WHERE c.code IN $courseCodes
             AND credits >= c.prerequisiteHours
             RETURN c`,
-            {courseMapId, semesterId, courseCodes}
+            { courseMapId, semesterId, courseCodes }
         )
     );
     if (res3.records.length !== courseCodes.length) {
@@ -333,7 +341,7 @@ const areSemesterCreditHoursExceeded = async (session, semesterId, courses) => {
         tx.run(
             `MATCH (s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
             RETURN sum(c.credits) AS credits`,
-            {semesterId}
+            { semesterId }
         )
     );
     const semesterCreditHours = res4.records[0].get('credits');
@@ -362,7 +370,7 @@ const addCoursesToSemesterAndUpdateDependentCourses = async (session, courseMapI
             SET cont.taken = true
 
             RETURN DISTINCT cm, s, c`,
-            {courseMapId, semesterId, courseCodes}
+            { courseMapId, semesterId, courseCodes }
         )
     );
     if (resWrite.records.length === 0) {
@@ -390,12 +398,12 @@ const addCoursesToSemester = async (user, courseMapId, semesterId, courseCodes) 
         const courses = await areCoursesPrereqCreditHoursMet(session, courseMapId, semesterId, courseCodes);
 
         await areSemesterCreditHoursExceeded(session, semesterId, courses);
-        
+
         const semester = await addCoursesToSemesterAndUpdateDependentCourses(session, courseMapId, semesterId, courseCodes);
         const endTime1 = new Date().getTime();
         console.log("addCoursesToSemester time: " + (endTime1 - startTime1) + "ms");
         return semester;
-        
+
     } finally {
         await session.close();
     }
@@ -414,13 +422,13 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 MATCH (cm)-[cont:CONTAINS {taken: false, outdegree: 0}]->(c:Course)
                 WHERE cont.lastPrereqSemesterOrder < s.order
                 RETURN c`,
-                {userEmail: user.email, courseMapId, semesterId}
+                { userEmail: user.email, courseMapId, semesterId }
             )
         );
         const endTime1 = new Date().getTime();
         console.log("getAvailableCourses time 1: " + (endTime1 - startTime1) + "ms");
         const coursesCodes = res.records.map(record => record.get('c').properties.code);
-        
+
         // check if the prerequisite credit hours of the past semesters is equal to or greater than the course's prerequisite credit hours
         const startTime2 = new Date().getTime();
         const res2 = await session.readTransaction(tx =>
@@ -434,7 +442,7 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 MATCH (cm)-[cont:CONTAINS]->(c:Course)
                 WHERE c.code IN $coursesCodes AND c.prerequisiteHours <= creditHours
                 RETURN c, cont.group`,
-                {userEmail: user.email, courseMapId, semesterId, coursesCodes}
+                { userEmail: user.email, courseMapId, semesterId, coursesCodes }
             )
         );
         const endTime2 = new Date().getTime();
@@ -451,14 +459,14 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
             tx.run(
                 `MATCH (s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
                 RETURN sum(c.credits) AS credits`,
-                {semesterId}
+                { semesterId }
             )
         );
         const endTime3 = new Date().getTime();
         console.log("getAvailableCourses time 3: " + (endTime3 - startTime3) + "ms");
         const semesterCreditHours = res4.records[0].get('credits');
         availableCourses = availableCourses.filter(course => semesterCreditHours + course.credits <= 21);
-        
+
         const endTime = new Date().getTime();
         console.log("getAvailableCourses total time: " + (endTime3 - startTime1) + "ms");
         return availableCourses;
@@ -476,7 +484,7 @@ const getCoursesBySemester = async (user, courseMapId, semesterId) => {
                 `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
                 MATCH (cm)-[cont:CONTAINS]->(c)
                 RETURN c, cont.group`,
-                {userEmail: user.email, courseMapId, semesterId}
+                { userEmail: user.email, courseMapId, semesterId }
             )
         );
         const courses = res.records.map(record => {
@@ -507,19 +515,19 @@ const removeCourseFromSemester = async (user, courseMapId, semesterId, courseCod
                 OPTIONAL MATCH (cm)-[cont:CONTAINS {taken: true}]->(c2:Course)-[:PREREQUISITE]->(c)
 
                 RETURN cm, s, c, cont, collect(c2) as prereqs`,
-                {userEmail: user.email, courseMapId, semesterId, courseCode}
+                { userEmail: user.email, courseMapId, semesterId, courseCode }
             )
         );
         if (res.records.length === 0) {
             throw new NotFoundError('Course not found in semester');
         }
-        
+
         const prereqs = res.records[0].get('prereqs');
         if (prereqs.length > 0) {
             throw new ValidationError('Cannot remove course because it is a prerequisite for other taken courses, remove those courses first and try again\n'
-            + prereqs.map(c => c.properties.code).join(', '));
+                + prereqs.map(c => c.properties.code).join(', '));
         }
-        
+
         const c = res.records[0].get('c').properties;
         const res2 = await session.writeTransaction(tx =>
             tx.run(
@@ -535,12 +543,12 @@ const removeCourseFromSemester = async (user, courseMapId, semesterId, courseCod
                 SET cont2.outdegree = cont2.outdegree + 1
 
                 RETURN cm, s, c`,
-                {userEmail: user.email, courseMapId, semesterId, courseCode}
+                { userEmail: user.email, courseMapId, semesterId, courseCode }
             )
         );
         const courseMap = res.records[0].get('cm').properties;
         const semester = res.records[0].get('s').properties;
-        return {courseMap, semester};
+        return { courseMap, semester };
     }
     finally {
         await session.close();
