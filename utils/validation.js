@@ -102,7 +102,7 @@ const validateCourseGroup = (group) => {
     if (typeof group !== 'string')
         throw new ValidationError('Course group must be a string');
     // remove all non-alphanumeric characters
-    group = group.replace(/[^a-zA-Z0-9]/g, '');
+    group = group.replace(/[^a-zA-Z0-9- ()]/g, '');
     return group;
 }
 

@@ -148,6 +148,37 @@ const addCourseToProgram = async (programCode, courseCode, courseGroup) => {
     }
 }
 
+const updateCourseGroupInProgram = async (programCode, courseCode, courseGroup) => {
+    courseCode = validateCourseCode(courseCode);
+    programCode = validateProgramCode(programCode);
+    courseGroup = validateCourseGroup(courseGroup);
+
+    driver = getDriver();
+    const session = driver.session();
+    try {
+        const res = await session.writeTransaction(tx =>
+            tx.run(
+                `MATCH (p:Program {code: $programCode})
+                MATCH (c:Course {code: $courseCode})
+                MATCH (p)-[r:REQUIRES]-(c)
+                SET r.courseGroup = $courseGroup
+                RETURN p, c`,
+                {programCode, courseCode, courseGroup}
+            )
+        );
+        if (res.records.length === 0) {
+            throw new NotFoundError('Program or course not found');
+        }
+        const program = res.records[0].get('p').properties;
+        const course = res.records[0].get('c').properties;
+        course.courseGroup = courseGroup;
+        program.updatedCourse = course;
+        return program;
+    } finally {
+        await session.close();
+    }
+}
+
 const removeCourseFromProgram = async (programCode, courseCode) => {
     courseCode = validateCourseCode(courseCode);
     programCode = validateProgramCode(programCode);
@@ -211,5 +242,6 @@ module.exports = {
     deleteProgram,
     addCourseToProgram,
     removeCourseFromProgram,
+    updateCourseGroupInProgram,
     getProgramCourses
 };

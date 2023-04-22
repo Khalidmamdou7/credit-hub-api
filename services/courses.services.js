@@ -1,7 +1,7 @@
 const { getDriver } = require('../neo4j');
 const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
-const { validateCourseCode, validateSemesterSeason } = require('../utils/validation');
+const { validateCourseCode, validateSemesterSeason, validateProgramCode } = require('../utils/validation');
 
 
 const createCourse = async (code, name, credits, availableSemesters) => {
@@ -152,7 +152,7 @@ const searchCourses = async (query) => {
     }
 };
 
-const addPrerequisiteCourses = async (code, prerequisiteCodes) => {
+const addPrerequisiteCourses = async (code, prerequisiteCodes, programCode) => {
     validateCourseCode(code);
     prerequisiteCodes.forEach((prerequisiteCode) => {
         try {
@@ -175,7 +175,7 @@ const addPrerequisiteCourses = async (code, prerequisiteCodes) => {
                 `MATCH (c:Course {code: $code})
                 MATCH (prerequisite:Course)
                 WHERE prerequisite.code IN $prerequisiteCodes
-                MERGE (c)-[:PREREQUISITE]->(prerequisite)
+                MERGE (c)-[:PREREQUISITE {programCode: $programCode}]->(prerequisite)
                 RETURN c, prerequisite`,
                 { code, prerequisiteCodes }
             )
@@ -193,9 +193,10 @@ const addPrerequisiteCourses = async (code, prerequisiteCodes) => {
 
 };
 
-const removePrerequisiteCourse = async (code, prerequisiteCode) => {
+const removePrerequisiteCourse = async (code, prerequisiteCode, programCode) => {
     validateCourseCode(code);
     validateCourseCode(prerequisiteCode);
+    validateProgramCode(programCode)
 
     driver = getDriver();
     const session = driver.session();
@@ -204,7 +205,7 @@ const removePrerequisiteCourse = async (code, prerequisiteCode) => {
             tx.run(
                 `MATCH (c:Course {code: $code})
                 MATCH (p:Course {code: $prerequisiteCode})
-                MATCH (c)-[r:PREREQUISITE]->(p)
+                MATCH (c)-[r:PREREQUISITE {programCode: $programCode}]->(p)
                 DELETE r
                 RETURN c, p, r`,
                 { code, prerequisiteCode }
@@ -219,7 +220,7 @@ const removePrerequisiteCourse = async (code, prerequisiteCode) => {
     }
 };
 
-const getPrerequisiteCourses = async (code) => {
+const getPrerequisiteCourses = async (code, programCode) => {
     validateCourseCode(code);
 
     driver = getDriver();
@@ -238,7 +239,7 @@ const getPrerequisiteCourses = async (code) => {
         }
         const res2 = await session.readTransaction(tx =>
             tx.run(
-                `MATCH (c:Course {code: $code})-[:PREREQUISITE]->(p:Course)
+                `MATCH (c:Course {code: $code})-[:PREREQUISITE {programCode: $programCode}]->(p:Course)
                 RETURN p`,
                 { code }
             )

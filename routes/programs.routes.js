@@ -269,6 +269,57 @@ programsRouter.delete('/:code/courses', async (req, res, next) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/programs/{programCode}/courses/{courseCode}:
+ *  put:
+ *      summary: Update a course group in a program
+ *      tags:
+ *          - Programs
+ *      parameters:
+ *          - in: path
+ *            name: programCode
+ *          - in: path
+ *            name: courseCode
+ *      requestBody:
+ *          required: true
+ *          content:
+ *              application/json:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          courseGroup:
+ *                              type: string
+ *                              description: The course group (e.g. "university-requirements", "college-requirements", "program-requirements", "elective-group-1", "elective-group-2")
+ *                      required:
+ *                          - courseGroup
+ *      responses:
+ *          200:
+ *              description: The course group updated
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/Course'
+ *          404:
+ *              description: The course or program does not exist 
+ *          422:
+ *              description: One or more fields are invalid
+ */
+
+programsRouter.put('/:programCode/courses/:courseCode', async (req, res, next) => {
+    const { programCode, courseCode } = req.params
+    const { courseGroup } = req.body
+
+    if (!programCode || !courseCode || !courseGroup) {
+        return res.status(422).json({ error: 'Missing required fields' })
+    }
+    try {
+        const course = await programsService.updateCourseGroupInProgram(programCode, courseCode, courseGroup)
+        res.json(course)
+    } catch (error) {
+        next(error)
+    }
+})
 
 /**
  * @swagger

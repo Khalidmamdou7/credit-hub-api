@@ -154,8 +154,8 @@ const getSemesters = async (user, courseMapId, includeCourses) => {
                 tx.run(
                     `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester)
                     OPTIONAL MATCH (s)-[:TAKES]->(c:Course)
-                    OPTIONAL MATCH (cm)-[contain:CONTAINS]->(c)
-                    RETURN s, collect({course: c, group: contain.group}) as courses
+                    OPTIONAL MATCH (cm)-[:BELONGS_TO]->(p:Program)-[req:REQUIRES]->(c)
+                    RETURN s, collect({course: c, group: req.courseGroup}) as courses
                     ORDER BY s.order`,
                     { userEmail: user.email, courseMapId }
                 )
@@ -433,9 +433,9 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 OPTIONAL MATCH (s2)-[:TAKES]->(c:Course)
                 WITH cm, s, coursesCodes, sum(c.credits) AS pastSemesterCredits
                 
-                MATCH (cm)-[cont:CONTAINS]->(c:Course)
+                MATCH (cm)-[:BELONGS_TO]->(p:Program)-[req:REQUIRES]->(c)
                 WHERE c.code IN coursesCodes AND c.prerequisiteHours <= pastSemesterCredits
-                RETURN collect({course: c, group: cont.group}) AS courses
+                RETURN collect({course: c, group: req.courseGroup}) AS courses
                 `,
                 { userEmail: user.email, courseMapId, semesterId }
             )
@@ -477,14 +477,15 @@ const getCoursesBySemester = async (user, courseMapId, semesterId) => {
         const res = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
-                MATCH (cm)-[cont:CONTAINS]->(c)
-                RETURN c, cont.group`,
+                MATCH (cm)-[:BELONGS_TO]->(p:Program)-[req:REQUIRES]->(c)
+
+                RETURN c, req.courseGroup`,
                 { userEmail: user.email, courseMapId, semesterId }
             )
         );
         const courses = res.records.map(record => {
             const course = record.get('c').properties;
-            course.group = record.get('cont.group') || null;
+            course.group = record.get('req.courseGroup') ? record.get('req.courseGroup') : null;
             return course;
         });
         return courses;
