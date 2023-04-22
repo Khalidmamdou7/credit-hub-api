@@ -171,6 +171,7 @@ const getSemesters = async (user, courseMapId, includeCourses) => {
                     course.group = courseNode.group;
                     return course;
                 });
+                semester.courses = semester.courses.filter(course => course !== null);
                 return semester;
             });
             return semesters;
