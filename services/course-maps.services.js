@@ -445,7 +445,7 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
         const courses = res.records[0].get('courses');
         let availableCourses = courses.map(courseObj => {
             let course = courseObj.course.properties;
-            course.group = courseObj.group ? courseObj.group.low : null;
+            course.group = courseObj.group ? courseObj.group : null;
             return course;
         });
 
