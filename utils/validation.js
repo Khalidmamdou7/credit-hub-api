@@ -80,11 +80,12 @@ const validateProgramName = (programName) => {
     return programName;
 }
 
+// year must be an integer between 1900 and 2100
 const validateYear = (year) => {
-    if (typeof year !== 'string')
-        throw new ValidationError('Year must be a string');
-    if (!year.match(/^[0-9]{4}$/))
-        throw new ValidationError('Invalid year, must be in the format of 2020');
+    if (typeof year !== 'number')
+        throw new ValidationError('Year must be a number');
+    if (year < 1900 || year > 2100)
+        throw new ValidationError('Invalid year, must be between 1900 and 2100');
     return year;
 }
 

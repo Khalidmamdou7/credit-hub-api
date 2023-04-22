@@ -21,12 +21,12 @@ const passport = require('passport');
  *                  type: string
  *                  description: The program code
  *              startingYear:
- *                  type: string
+ *                  type: integer
  *                  description: The starting year of the course map
  *          example:
  *              name: "CCEC Plan A"
  *              programCode: "CCEC"
- *              startingYear: "2019"
+ *              startingYear: 2019
  *      CourseMapSemesterResponse:
  *          type: object
  *          required:
@@ -95,6 +95,34 @@ const passport = require('passport');
  *                    year: 2022
  *                    season: "Spring"
  *                    semesterOrder: 2
+ *      CourseMapMetaDataResponse:
+ *          type: object
+ *          required:
+ *              - id
+ *              - name
+ *              - program
+ *          properties:
+ *              id:
+ *                  type: string
+ *                  description: The course map id
+ *              name:
+ *                  type: string
+ *                  description: The course map name
+ *              program:
+ *                  type: object
+ *                  properties:
+ *                      code:
+ *                          type: string
+ *                          description: The program code
+ *                      name:
+ *                          type: string
+ *                          description: The program name
+ *          example:
+ *              id: "a970a2b3-0607-49a3-8d5c-3d99c2eec836"
+ *              name: "CCEC Plan A"
+ *              program:
+ *                  code: "CCEC"
+ *                  name: "Communication and Computer Engineering - Track C"
  * 
  */
 
@@ -155,6 +183,12 @@ courseMapsRouter.post('/', passport.authenticate('jwt', { session: false }), asy
  *      responses:
  *          200:
  *              description: The course maps
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/CourseMapMetaDataResponse'
  *          401:
  *              description: Unauthorized
  *          500:
@@ -172,7 +206,7 @@ courseMapsRouter.get('/', passport.authenticate('jwt', { session: false }), asyn
 
 /**
  * @swagger
- * /api/course-maps/{id}/semesters:
+ * /api/course-maps/{courseMapId}/semesters:
  *  post:
  *      summary: Add a semester to a course map
  *      tags:
@@ -181,7 +215,7 @@ courseMapsRouter.get('/', passport.authenticate('jwt', { session: false }), asyn
  *          - BearerAuth: []
  *      parameters:
  *          - in: path
- *            name: id
+ *            name: courseMapId
  *      schema:
  *          type: string
  *          required: true
@@ -201,11 +235,15 @@ courseMapsRouter.get('/', passport.authenticate('jwt', { session: false }), asyn
  *                          - semesterYear
  *                          - semesterSeason
  *                      example:
- *                          semesterYear: 2021
+ *                          semesterYear: 2024
  *                          semesterSeason: "Fall"
  *      responses:
  *          201:
- *              description: The semester added to the course map
+ *              description: The semester added to the course map successfully
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          $ref: '#/components/schemas/CourseMapSemesterResponse'
  *          401:
  *              description: Unauthorized
  *          403:
@@ -214,16 +252,16 @@ courseMapsRouter.get('/', passport.authenticate('jwt', { session: false }), asyn
  *              description: Internal server error
  */
 
-courseMapsRouter.post('/:id/semesters', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
+courseMapsRouter.post('/:courseMapId/semesters', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
     const { semesterYear, semesterSeason } = req.body;
-    const { id } = req.params;
+    const { courseMapId } = req.params;
 
-    if (!id || !semesterYear || !semesterSeason) {
-        return res.status(400).json({ error: 'Missing one or more of required fields: semesterYear, semesterSeason, courseMapId' });
+    if (!courseMapId || !semesterYear || !semesterSeason) {
+        return res.status(400).json({ error: 'Missing one or more of required fields: courseMapId, semesterYear, semesterSeason' });
     }
 
     try {
-        const semester = await courseMapService.addSemesterToCourseMap(req.user, id, semesterSeason, semesterYear);
+        const semester = await courseMapService.addSemesterToCourseMap(req.user, courseMapId, semesterSeason, semesterYear);
         res.status(201).json(semester);
     } catch (error) {
         next(error);
@@ -249,6 +287,12 @@ courseMapsRouter.post('/:id/semesters', passport.authenticate('jwt', { session: 
  *      responses:
  *          200:
  *              description: The semesters for the course map
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: array
+ *                          items:
+ *                              $ref: '#/components/schemas/CourseMapSemesterResponse'
  *          401:
  *              description: Unauthorized
  *          500:

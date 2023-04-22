@@ -81,12 +81,17 @@ const getCourseMaps = async (user) => {
     try {
         const res = await session.readTransaction(tx =>
             tx.run(
-                `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap)
-                RETURN cm`,
+                `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap)-[:BELONGS_TO]->(p:Program)
+                RETURN cm, p`,
                 {userEmail: user.email}
             )
         );
-        const courseMaps = res.records.map(record => record.get('cm').properties);
+        const courseMaps = res.records.map(record => {
+            const courseMap = record.get('cm').properties;
+            const program = record.get('p').properties;
+            courseMap.program = program;
+            return courseMap;
+        });
         return courseMaps;
     } finally {
         await session.close();
@@ -358,7 +363,7 @@ const addCoursesToSemester = async (user, courseMapId, semesterId, courseCodes) 
     driver = getDriver();
     const session = driver.session();
     try {
-
+        const startTime1 = new Date().getTime();
         await areCoursesInCourseMap(session, courseMapId, courseCodes);
 
         await areCoursesPrereqsTaken(session, courseMapId, semesterId, courseCodes);
@@ -368,7 +373,8 @@ const addCoursesToSemester = async (user, courseMapId, semesterId, courseCodes) 
         await areSemesterCreditHoursExceeded(session, semesterId, courses);
         
         const semester = await addCoursesToSemesterAndUpdateDependentCourses(session, courseMapId, semesterId, courseCodes);
-
+        const endTime1 = new Date().getTime();
+        console.log("addCoursesToSemester time: " + (endTime1 - startTime1) + "ms");
         return semester;
         
     } finally {
@@ -381,6 +387,7 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
     driver = getDriver();
     const session = driver.session();
     try {
+        const startTime1 = new Date().getTime();
         // get courses that are not taken and have no prerequisites or all prerequisites are taken
         const res = await session.readTransaction(tx =>
             tx.run(
@@ -391,9 +398,12 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 {userEmail: user.email, courseMapId, semesterId}
             )
         );
+        const endTime1 = new Date().getTime();
+        console.log("getAvailableCourses time 1: " + (endTime1 - startTime1) + "ms");
         const coursesCodes = res.records.map(record => record.get('c').properties.code);
         
         // check if the prerequisite credit hours of the past semesters is equal to or greater than the course's prerequisite credit hours
+        const startTime2 = new Date().getTime();
         const res2 = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester {id: $semesterId})
@@ -408,6 +418,8 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 {userEmail: user.email, courseMapId, semesterId, coursesCodes}
             )
         );
+        const endTime2 = new Date().getTime();
+        console.log("getAvailableCourses time 2: " + (endTime2 - startTime2) + "ms");
         let availableCourses = res2.records.map(record => {
             const course = record.get('c').properties;
             course.group = record.get('cont.group') || null;
@@ -415,6 +427,7 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
         });
 
         // check if the number of credits taken in this semester is less than or equal to 21
+        const startTime3 = new Date().getTime();
         const res4 = await session.readTransaction(tx =>
             tx.run(
                 `MATCH (s:Semester {id: $semesterId})-[:TAKES]->(c:Course)
@@ -422,9 +435,13 @@ const getAvailableCourses = async (user, courseMapId, semesterId) => {
                 {semesterId}
             )
         );
+        const endTime3 = new Date().getTime();
+        console.log("getAvailableCourses time 3: " + (endTime3 - startTime3) + "ms");
         const semesterCreditHours = res4.records[0].get('credits');
         availableCourses = availableCourses.filter(course => semesterCreditHours + course.credits <= 21);
-
+        
+        const endTime = new Date().getTime();
+        console.log("getAvailableCourses total time: " + (endTime3 - startTime1) + "ms");
         return availableCourses;
     } finally {
         await session.close();
