@@ -130,24 +130,43 @@ const addSemesterToCourseMap = async (user, courseMapId, semesterSeason, semeste
     }
 }
 
-const getSemesters = async (user, courseMapId) => {
+const getSemesters = async (user, courseMapId, includeCourses) => {
     driver = getDriver();
     const session = driver.session();
     try {
-        const res = await session.readTransaction(tx =>
-            tx.run(
-                `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester)
-                RETURN s
-                ORDER BY s.order`,
-                {userEmail: user.email, courseMapId}
-            )
-        );
-        const semesters = res.records.map(record => {
-            const semester = record.get('s').properties;
-            semester.order = semester.order.low;
-            return semester;
-        });
-        return semesters;
+        if (!includeCourses) {
+            const res = await session.readTransaction(tx =>
+                tx.run(
+                    `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester)
+                    RETURN s
+                    ORDER BY s.order`,
+                    {userEmail: user.email, courseMapId}
+                )
+            );
+            const semesters = res.records.map(record => {
+                const semester = record.get('s').properties;
+                semester.order = semester.order.low;
+                return semester;
+            });
+            return semesters;
+        } else {
+            const res = await session.readTransaction(tx =>
+                tx.run(
+                    `MATCH (u:User {email: $userEmail})-[:CREATED]->(cm:CourseMap {id: $courseMapId})-[:HAS_SEMESTER]->(s:Semester)
+                    OPTIONAL MATCH (s)-[:CONTAINS]->(c:Course)
+                    RETURN s, collect(c) as courses
+                    ORDER BY s.order`,
+                    {userEmail: user.email, courseMapId}
+                )
+            );
+            const semesters = res.records.map(record => {
+                const semester = record.get('s').properties;
+                semester.order = semester.order.low;
+                semester.courses = record.get('courses').map(course => course.properties);
+                return semester;
+            });
+            return semesters;
+        }
     } finally {
         await session.close();
     }

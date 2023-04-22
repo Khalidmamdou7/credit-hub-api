@@ -280,6 +280,11 @@ courseMapsRouter.post('/:courseMapId/semesters', passport.authenticate('jwt', { 
  *      parameters:
  *          - in: path
  *            name: courseMapId
+ *          - in: query
+ *            name: includeCourses
+ *            schema:
+ *              type: boolean
+ *              description: Whether to return the courses of each semester
  *      schema:
  *          type: string
  *          required: true
@@ -301,13 +306,19 @@ courseMapsRouter.post('/:courseMapId/semesters', passport.authenticate('jwt', { 
 
 courseMapsRouter.get('/:courseMapId/semesters', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
     const { courseMapId } = req.params;
+    const { includeCourses } = req.query;
 
     if (!courseMapId) {
         return res.status(400).json({ error: 'Missing courseMapId' });
     }
+    if (includeCourses) {
+        if (includeCourses !== 'true' && includeCourses !== 'false') {
+            return res.status(400).json({ error: 'includeCourses must be a boolean' });
+        }
+    }
 
     try {
-        const semesters = await courseMapService.getSemesters(req.user, courseMapId);
+        const semesters = await courseMapService.getSemesters(req.user, courseMapId, includeCourses || false);
         res.json(semesters);
     } catch (error) {
         next(error);
