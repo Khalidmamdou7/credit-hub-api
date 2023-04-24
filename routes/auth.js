@@ -299,7 +299,7 @@ authRouter.post('/forgot-password', async (req, res, next) => {
 authRouter.post('/reset-password', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     try {
         const {password} = req.body;
-        const output = await authService.resetPassword(req.user.userId, password);
+        const output = await authService.resetPassword(req.user.email, password);
         res.json(output);
     } catch (e) {
         next(e);

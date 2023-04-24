@@ -79,7 +79,7 @@ const confirmEmail = async (userId, token) => {
                 `MATCH (u:User {email: $userEmail})
                 SET u.active = true
                 RETURN u`,
-                { userId }
+                { userEmail: claims.email }
             )
         );
 
@@ -222,7 +222,7 @@ const forgotPassword = async (email) => {
     }
 }
 
-const resetPassword = async (userId, plainPassword) => {
+const resetPassword = async (userEmail, plainPassword) => {
     if (!plainPassword || plainPassword.length < 8)
         throw new ValidationError('Password must be at least 8 characters');
         
@@ -237,7 +237,7 @@ const resetPassword = async (userId, plainPassword) => {
                 `MATCH (u:User {email: $userEmail})
                 SET u.password = $password
                 RETURN u`,
-                { userId, password: encrypted }
+                { userEmail, password: encrypted }
             )
         );
 
@@ -264,7 +264,7 @@ const resetPassword = async (userId, plainPassword) => {
 const userToClaims = (user) => {
     const { name, userId, email } = user;
 
-    return { sub: userId, userId, name, email };
+    return { sub: userId, name, email };
 }
 
 
