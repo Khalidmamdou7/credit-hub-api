@@ -23,7 +23,11 @@ const addCourseMap = async (user, courseMapName, programCode, startingYear) => {
                 WITH u, cm, p
 
                 MATCH (p)-[r:REQUIRES]-(c:Course)
-                CREATE (cm)-[:CONTAINS {taken: false, outdegree: size((c)-[:PREREQUISITE]->()) , lastPrereqSemesterOrder: -1}]->(c)
+                CREATE (cm)-[:CONTAINS {
+                    taken: false, 
+                    outdegree: (size((c)-[:PREREQUISITE {programCode: p.code}]->()) + size((c)-[:PREREQUISITE {programCode: 'ALL'}]->())),
+                    lastPrereqSemesterOrder: -1
+                }]->(c)
                 with DISTINCT u, cm, p
 
                 // generate semesters for course map for 5 years
@@ -255,8 +259,8 @@ const addCourseToSemester = async (user, courseMapId, semesterId, courseCode) =>
                 MATCH (cm)-[cont:CONTAINS]->(c:Course {code: $courseCode})
                 
                 
-                OPTIONAL MATCH (c2:Course)-[:PREREQUISITE]->(c)
-                OPTIONAL MATCH (cm)-[cont2:CONTAINS {taken: false}]->(c2)
+                OPTIONAL MATCH (cm)-[cont2:CONTAINS {taken: false}]->(c2)-[:PREREQUISITE]->(c)
+                WITH DISTINCT c, s, cm, cont, c2, cont2
                 SET cont2.outdegree = cont2.outdegree - 1
                 SET cont2.lastPrereqSemesterOrder = CASE WHEN cont2.lastPrereqSemesterOrder < s.order THEN s.order ELSE cont2.lastPrereqSemesterOrder END
                 
@@ -359,8 +363,8 @@ const addCoursesToSemesterAndUpdateDependentCourses = async (session, courseMapI
             MATCH (cm)-[cont:CONTAINS]->(c:Course)
             WHERE c.code IN $courseCodes
 
-            OPTIONAL MATCH (c2:Course)-[:PREREQUISITE]->(c)
-            OPTIONAL MATCH (cm)-[cont2:CONTAINS {taken: false}]->(c2)
+            OPTIONAL MATCH (cm)-[cont2:CONTAINS {taken: false}]->(c2)-[:PREREQUISITE]->(c)
+            WITH DISTINCT c, s, cm, cont, c2, cont2
             SET cont2.outdegree = cont2.outdegree - 1
             SET cont2.lastPrereqSemesterOrder = CASE WHEN cont2.lastPrereqSemesterOrder < s.order THEN s.order ELSE cont2.lastPrereqSemesterOrder END
 

@@ -68,6 +68,7 @@ const validateProgramCode = (programCode) => {
     if (typeof programCode !== 'string')
         throw new ValidationError('Program code must be a string');
     programCode = programCode.toUpperCase();
+    // TODO: compare with the exact list of program codes instead of this regex
     if (!programCode.match(/^[A-Z]{2,4}$/))
         throw new ValidationError('Invalid program code, must be in the format of CCEC, EEE or UND');
     return programCode;

@@ -417,10 +417,16 @@ coursesRouter.post('/:code/semesters/:semester/timeslots/:type', passport.authen
  *      parameters:
  *          - in: path
  *            name: courseCode
- *      schema:
- *          type: string
- *          required: true
- *          description: The course code
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course code
+ *          - in: query
+ *            name: programCode
+ *            schema:
+ *              type: string
+ *              required: false
+ *              description: optional program code if the course is multi-program (cce and eee takes the same course but with different prerequisites (elcn203 for example))
  *      responses:
  *          200:
  *              description: The list of prerequisites
@@ -440,8 +446,9 @@ coursesRouter.post('/:code/semesters/:semester/timeslots/:type', passport.authen
 
 coursesRouter.get('/:code/prerequisites', async (req, res, next) => {
     const code = req.params.code.toUpperCase();
+    const programCode = req.query.programCode || 'ALL';
     try {
-        const prerequisites = await coursesService.getPrerequisiteCourses(code);
+        const prerequisites = await coursesService.getPrerequisiteCourses(code, programCode);
         res.json(prerequisites);
     } catch (error) {
         next(error);
@@ -464,12 +471,15 @@ coursesRouter.get('/:code/prerequisites', async (req, res, next) => {
  *          required: true
  *          description: The course code
  *      requestBody:
- *          description: The prerequisite courses codes to add
+ *          description: The prerequisite courses codes to add and an optional program code if the prerequisite is program-specific (cce and eee have different prerequisites)
  *          content:
  *              application/json:
  *                  schema:
  *                      type: object
  *                      properties:
+ *                          programCode:
+ *                              type: string
+ *                              description: Optional program code (e.g. CCEC, HEM, EEE, etc.) if the prerequisite is program-specific (cce and eee have different prerequisites)
  *                          prerequisiteCodes:
  *                              type: array
  *                              items:
@@ -499,6 +509,8 @@ coursesRouter.get('/:code/prerequisites', async (req, res, next) => {
 coursesRouter.post('/:code/prerequisites', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     let code = req.params.code.toUpperCase();
     let { prerequisiteCodes } = req.body;
+    let programCode = req.body.programCode || 'ALL';
+    
     prerequisiteCodes = prerequisiteCodes.map(code => code.toUpperCase());
 
     if (!Array.isArray(prerequisiteCodes) || prerequisiteCodes.length === 0) {
@@ -506,7 +518,7 @@ coursesRouter.post('/:code/prerequisites', passport.authenticate('jwt', {session
     }
 
     try {
-        const course = await coursesService.addPrerequisiteCourses(code, prerequisiteCodes);
+        const course = await coursesService.addPrerequisiteCourses(code, prerequisiteCodes, programCode);
         res.json(course);
     } catch (error) {
         next(error);
@@ -556,9 +568,10 @@ coursesRouter.post('/:code/prerequisites', passport.authenticate('jwt', {session
 coursesRouter.delete('/:code/prerequisites/:prerequisiteCode', passport.authenticate('jwt', {session: false}), async (req, res, next) => {
     const code = req.params.code.toUpperCase();
     const prerequisiteCode = req.params.prerequisiteCode.toUpperCase();
+    const programCode = req.query.programCode || 'ALL';
 
     try {
-        const course = await coursesService.removePrerequisiteCourse(code, prerequisiteCode);
+        const course = await coursesService.removePrerequisiteCourse(code, prerequisiteCode, programCode);
         res.json(course);
     } catch (error) {
         next(error);

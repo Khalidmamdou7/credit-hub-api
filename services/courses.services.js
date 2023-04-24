@@ -154,6 +154,9 @@ const searchCourses = async (query) => {
 
 const addPrerequisiteCourses = async (code, prerequisiteCodes, programCode) => {
     validateCourseCode(code);
+    if (programCode !== 'ALL') {
+        programCode = validateProgramCode(programCode);
+    }
     prerequisiteCodes.forEach((prerequisiteCode) => {
         try {
             validateCourseCode(prerequisiteCode);
@@ -175,9 +178,11 @@ const addPrerequisiteCourses = async (code, prerequisiteCodes, programCode) => {
                 `MATCH (c:Course {code: $code})
                 MATCH (prerequisite:Course)
                 WHERE prerequisite.code IN $prerequisiteCodes
-                MERGE (c)-[:PREREQUISITE {programCode: $programCode}]->(prerequisite)
+                CREATE (c)-[pr_relation:PREREQUISITE]->(prerequisite)
+                SET pr_relation.programCode = $programCode
+
                 RETURN c, prerequisite`,
-                { code, prerequisiteCodes }
+                { code, prerequisiteCodes, programCode }
             )
         );
         if (res.records.length === 0) {
@@ -196,7 +201,9 @@ const addPrerequisiteCourses = async (code, prerequisiteCodes, programCode) => {
 const removePrerequisiteCourse = async (code, prerequisiteCode, programCode) => {
     validateCourseCode(code);
     validateCourseCode(prerequisiteCode);
-    validateProgramCode(programCode)
+    if (programCode !== 'ALL') {
+        programCode = validateProgramCode(programCode);
+    }
 
     driver = getDriver();
     const session = driver.session();
@@ -222,6 +229,9 @@ const removePrerequisiteCourse = async (code, prerequisiteCode, programCode) => 
 
 const getPrerequisiteCourses = async (code, programCode) => {
     validateCourseCode(code);
+    if (programCode !== 'ALL') {
+        programCode = validateProgramCode(programCode);
+    }
 
     driver = getDriver();
     const session = driver.session();
@@ -237,15 +247,20 @@ const getPrerequisiteCourses = async (code, programCode) => {
         if (res.records.length === 0) {
             throw new NotFoundError('Course not found');
         }
+        const course = res.records[0].get('c').properties;
         const res2 = await session.readTransaction(tx =>
             tx.run(
-                `MATCH (c:Course {code: $code})-[:PREREQUISITE {programCode: $programCode}]->(p:Course)
-                RETURN p`,
-                { code }
+                `match (c:Course {code: $code})-[pr_relation:PREREQUISITE]->(prereqCourse:Course)
+                where pr_relation.programCode = $programCode or pr_relation.programCode = 'ALL'
+                return c, collect(prereqCourse) as prereqs`,
+                { code, programCode }
             )
         );
-        const course = res.records[0].get('c').properties;
-        const prerequisites = res2.records.map(record => record.get('p').properties);
+        if (res2.records.length === 0) {
+            course.prerequisites = [];
+            return course;
+        }
+        const prerequisites = res2.records[0].get('prereqs').map(prereq => prereq.properties);
         course.prerequisites = prerequisites;
         return course;
     } finally {
