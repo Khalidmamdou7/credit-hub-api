@@ -134,7 +134,8 @@ const deleteCourse = async (code) => {
 const searchCourses = async (query) => {
     // sanitize query
     query = query.replace(/[^a-zA-Z0-9 ,-]/g, '');
-
+    // Whenever u see a hyphen, replace it with a space as neo4j considers hyphen as a special character
+    query = query.replace(/-/g, ' ');
     query = query + '*';
     driver = getDriver();
     const session = driver.session();
