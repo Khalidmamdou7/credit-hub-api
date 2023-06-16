@@ -66,7 +66,7 @@ const register = async (email, plainPassword, name, mobile, program) => {
 
 const confirmEmail = async (userId, token) => {
     const claims = jwt.verify(token, process.env.JWT_SECRET);
-    if (claims.userId !== userId) {
+    if (claims.sub !== userId) {
         throw new ValidationError('Invalid token');
     }
 
