@@ -15,6 +15,7 @@ const swapRequestsRouter = require('./routes/swap-requests.routes');
 const programsRouter = require('./routes/programs.routes');
 const courseMapsRouter = require('./routes/course-maps.routes');
 const scheduleRouter = require('./routes/schedule.routes');
+const contactRouter = require('./routes/contact.routes');
 
 const errorMiddleware = require('./middleware/error.middleware');
 
@@ -73,8 +74,9 @@ app.use('/api/swap-requests', swapRequestsRouter);
 app.use('/api/programs', programsRouter);
 app.use('/api/course-maps', courseMapsRouter);
 app.use('/api/schedule', scheduleRouter);
+app.use('/api/contact', contactRouter);
 
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server started on port ${PORT}, You can access the api documentation at http://localhost:${PORT}/api-docs`));
