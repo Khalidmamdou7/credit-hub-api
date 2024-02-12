@@ -2,9 +2,9 @@ const ValidationError = require('../errors/validation.error');
 
 const validateCourseCode = (code) => {
     code = code.toUpperCase();
-    const regex = /^[A-Z]{2,4}N[0-9]{3}$/;
+    const regex = /^[A-Z]{2,4}[NS][0-9]{3}$/;
     if (!regex.test(code)) {
-        throw new ValidationError(`Invalid course code : ${code}, must be in the format of CMPN123 or PEN123`);
+        throw new ValidationError(`Invalid course code : ${code}, must be in the format of CMPN123/PEN123 or CMPS123/PES123`);
     }
     return code;
 }

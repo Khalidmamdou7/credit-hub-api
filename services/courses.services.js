@@ -1,12 +1,14 @@
 const { getDriver } = require('../neo4j');
 const ValidationError = require('../errors/validation.error');
 const NotFoundError = require('../errors/not-found.error');
-const { validateCourseCode, validateSemesterSeason } = require('../utils/validation');
+const { validateCourseCode, validateSemesterSeason, validateYear } = require('../utils/validation');
+const logger = require('../configs/logger');
 
 
-const createCourse = async (code, name, credits, availableSemesters) => {
+const createCourse = async (code, name, credits, availableSemesters, bylaws = "2018") => {
     validateCourseCode(code);
     name = name.replace(/[^a-zA-Z0-9 ,-]/g, '');
+    bylaws = validateYear(bylaws);
     credits = parseInt(credits);
     if (isNaN(credits)) {
         throw new ValidationError('Credits must be a number');
@@ -17,16 +19,18 @@ const createCourse = async (code, name, credits, availableSemesters) => {
     driver = getDriver();
     const session = driver.session();
     try {
+        query = `CREATE (c:Course {
+            code: $code,
+            name: $name,
+            credits: $credits,
+            availableSemesters: $availableSemesters
+        })
+        SET c:CourseBylaws${bylaws}
+        RETURN c`;
         const res = await session.writeTransaction(tx =>
             tx.run(
-                `CREATE (c:Course {
-                    code: $code,
-                    name: $name,
-                    credits: $credits,
-                    availableSemesters: $availableSemesters
-                })
-                RETURN c`,
-                { code, name, credits , availableSemesters}
+                query,
+                { code, name, credits, availableSemesters }
             )
         );
         return res.records[0].get('c').properties;
@@ -40,15 +44,16 @@ const createCourse = async (code, name, credits, availableSemesters) => {
     }
 };
 
-const getAllCourses = async () => {
+const getAllCourses = async (bylaws = "2018") => {
+    bylaws = validateYear(bylaws);
+    let courseLabel = (bylaws === "2023") ? "CourseBylaws2023" : "CourseBylaws2018";
+
     driver = getDriver();
     const session = driver.session();
     try {
+        query = `MATCH (c:Course:${courseLabel}) RETURN c`;
         const res = await session.readTransaction(tx =>
-            tx.run(
-                `MATCH (c:Course)
-                RETURN c`
-            )
+            tx.run(query)
         );
         const courses = res.records.map(record => record.get('c').properties);
         return courses;
@@ -131,18 +136,25 @@ const deleteCourse = async (code) => {
     }
 };
 
-const searchCourses = async (query) => {
+const searchCourses = async (query, limit = 10, bylaws = "2018") => {
+    bylaws = validateYear(bylaws);
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+        throw new ValidationError('Limit must be a number between 1 and 100');
+    }
     // sanitize query
     query = query.replace(/[^a-zA-Z0-9 ,-]/g, '');
-
     query = query + '*';
+
+    indexName = (bylaws === "2023") ? "coursesNamesAndCodesNewBylaws" : "coursesNamesAndCodesOldBylaws";
+
     driver = getDriver();
     const session = driver.session();
     try {
         const res = await session.readTransaction(tx =>
             tx.run(`
-            CALL db.index.fulltext.queryNodes("namesAndCodes", $query) YIELD node
-            RETURN node LIMIT 10`, { query }
+            CALL db.index.fulltext.queryNodes($indexName, $query) YIELD node
+            RETURN node LIMIT toInteger($limit)`,
+                { indexName, query, limit }
             )
         );
         const courses = res.records.map(record => record.get('node').properties);

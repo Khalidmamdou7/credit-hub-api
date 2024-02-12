@@ -2,6 +2,7 @@ const coursesRouter = require('express').Router();
 const coursesService = require('../services/courses.services');
 const timeslotsService = require('../services/timeslots.services');
 const passport = require('passport');
+const logger = require('../configs/logger');
 
 /**
  * @swagger
@@ -97,6 +98,13 @@ const passport = require('passport');
  *  get:
  *      summary: Returns the list of all courses
  *      tags: [Courses]
+ *      parameters:
+ *          - in: query
+ *            name: bylaws
+ *            schema:
+ *              type: string
+ *              enum: [2018, 2023]
+ *              description: The year of the bylaws (2018 (old bylaws) or 2023 (new bylaws)
  *      responses:
  *          200:
  *              description: The list of courses
@@ -113,6 +121,13 @@ const passport = require('passport');
  *      tags: [Courses]
  *      security:
  *          - BearerAuth: []
+ *      parameters:
+ *         - in: query
+ *           name: bylaws
+ *           schema:
+ *              type: string
+ *              enum: [2018, 2023]
+ *              description: The year of the bylaws (2018 (old bylaws) or 2023 (new bylaws)
  *      requestBody:
  *          required: true
  *          content:
@@ -210,8 +225,12 @@ const passport = require('passport');
  */
 
 coursesRouter.get('/', async (req, res, next) => {
+    const bylaws = req.query.bylaws || "2018";
+
+    logger.info(`Get all courses with bylaws: ${bylaws}`);
+
     try {
-        const courses = await coursesService.getAllCourses();
+        const courses = await coursesService.getAllCourses(bylaws);
         res.json(courses);
     } catch (error) {
         next(error);
@@ -232,9 +251,12 @@ coursesRouter.post('/', passport.authenticate('jwt', {session: false}), async (r
     const { name, credits } = req.body;
     const code = req.body.code.toUpperCase();
     const availableSemesters = req.body.availableSemesters || [];
+    const bylaws = req.query.bylaws || "2018";
+
+    logger.info(`Create course with code: ${code}, name: ${name}, credits: ${credits}, availableSemesters: ${availableSemesters}, bylaws: ${bylaws}`);
 
     try {
-        const course = await coursesService.createCourse(code, name, credits, availableSemesters);
+        const course = await coursesService.createCourse(code, name, credits, availableSemesters, bylaws);
         res.json(course);
     } catch (error) {
         next(error);
@@ -274,10 +296,21 @@ coursesRouter.delete('/:code', passport.authenticate('jwt', {session: false}), a
  *      parameters:
  *          - in: path
  *            name: query
- *      schema:
- *          type: string
- *          required: true
- *          description: The course code or course name
+ *            schema:
+ *              type: string
+ *              required: true
+ *              description: The course code or course name
+ *          - in: query
+ *            name: limit
+ *            schema:
+ *              type: integer
+ *              description: The maximum number of courses to return (1-100)
+ *          - in: query
+ *            name: bylaws
+ *            schema:
+ *              type: string
+ *              enum: [2018, 2023]
+ *              description: The year of the bylaws (2018 (old bylaws) or 2023 (new bylaws)
  *      responses:
  *          200:
  *              description: The list of courses matching the search query
@@ -295,8 +328,11 @@ coursesRouter.delete('/:code', passport.authenticate('jwt', {session: false}), a
 
 coursesRouter.get('/search/:query', async (req, res, next) => {
     let query = req.params.query;
+    let limit = req.query.limit || 10;
+    let bylaws = req.query.bylaws || "2018";
     try {
-        const courses = await coursesService.searchCourses(query);
+        logger.info(`Search for courses by query: ${query} ,limit: ${limit}, bylaws: ${bylaws}`);
+        const courses = await coursesService.searchCourses(query, limit, bylaws);
         res.json(courses);
     } catch (error) {
         next(error);
