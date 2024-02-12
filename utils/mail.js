@@ -14,13 +14,14 @@ const transporter = nodemailer.createTransport({
 });
 
 // send email
-const sendEmail = async (email, subject, text) => {
+const sendEmail = async (email, subject, text, attachedFilePath, attachedFileName) => {
     try {
         const mailOptions = {
             from: process.env.EMAIL,
             to: email,
             subject,
-            text
+            text,
+            attachments: attachedFilePath ? [{ path: attachedFilePath, filename: attachedFileName }] : []
         };
         await transporter.sendMail(mailOptions);
         logger.info('Email sent');
