@@ -1,5 +1,7 @@
+const logger = require('../configs/logger');
+
 module.exports = function errorMiddleware(error, req, res, next) {
-  console.log(error)
+  logger.error(error.message, error)
 
   res.status(error.code || 500)
     .json({

@@ -1,4 +1,5 @@
 const courseMapsRouter = require('express').Router();
+const logger = require('../configs/logger');
 const courseMapService = require('../services/course-maps.services');
 
 const passport = require('passport');
@@ -244,7 +245,7 @@ courseMapsRouter.post('/:courseMapId/semesters/:semesterId/courses/:courseCode',
     }
 
     try {
-        console.log('courseCode', courseCode);
+        logger.info(`Adding course ${courseCode} to semester ${semesterId} in course map ${courseMapId}`);
         const course = await courseMapService.addCourseToSemester(req.user, courseMapId, semesterId, courseCode);
         res.json(course);
     } catch (error) {

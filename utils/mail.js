@@ -1,5 +1,7 @@
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
+const logger = require('../configs/logger');
+const { log } = require('winston');
 dotenv.config();
 
 // nodemailer configuration
@@ -21,9 +23,9 @@ const sendEmail = async (email, subject, text) => {
             text
         };
         await transporter.sendMail(mailOptions);
-        console.log('Email sent');
+        logger.info('Email sent');
     } catch (error) {
-        console.log("Error sending email: ", error);
+        logger.error("Error sending email: ", error);
     }
     
 };
@@ -52,9 +54,9 @@ const sendConfirmationEmail = async (email, userId, token) => {
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Confirmation Email sent');
+        logger.info('Confirmation Email sent');
     } catch (error) {
-        console.log("Error sending confirmation email: ", error);
+        logger.error("Error sending confirmation email: ", error);
     }
 
 };
@@ -81,9 +83,9 @@ const sendResetPasswordEmail = async (email, token) => {
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Reset Password email sent');
+        logger.info('Reset Password Email sent');
     } catch (error) {
-        console.log("Error sending reset Password email: ", error);
+        logger.error("Error sending reset password email: ", error);
     }
 };
 
@@ -105,9 +107,9 @@ const sendPasswordChangedEmail = async (email) => {
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Password changed email sent');
+        logger.info('Password changed email sent');
     } catch (error) {
-        console.log("Error sending password changed email: ", error);
+        logger.error("Error sending password changed email: ", error);
     }
 };
 
@@ -132,9 +134,9 @@ const sendMatchFoundEmail = async (email, course, offeredTimeslot, wantedTimeslo
             `
         };
         await transporter.sendMail(mailOptions);
-        console.log('Match found email sent');
+        logger.info('Match found email sent');
     } catch (error) {
-        console.log("Error sending match found email: ", error);
+        logger.error("Error sending match found email: ", error);
     }
 };
 

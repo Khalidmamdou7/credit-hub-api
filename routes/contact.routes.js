@@ -1,5 +1,7 @@
 const contactRouter = require('express').Router();
 const axios = require('axios');
+const { log } = require('winston');
+const logger = require('../configs/logger');
 
 
 
@@ -47,15 +49,14 @@ contactRouter.post('/volunteer', async (req, res, next) => {
         if (!phoneNumber || !text || !apiKey) {
             throw new Error('Invalid request, missing one of the required fields');
         }
-        // send a get request to this link:
-        // https://api.callmebot.com/whatsapp.php?phone=201272404140&text=This+is+a+test&apikey=5369429
 
         const apiLink = `https://api.callmebot.com/whatsapp.php?phone=${phoneNumber}&text=${text}&apikey=${apiKey}`;
         const response = await axios.get(apiLink);
         if (response.status !== 200) {
-            console.log(response);
+            logger.error(`Error sending request to admin with phone number ${phoneNumber} and api key ${apiKey}, Response from api: ${response.data}`);
             throw new Error('Error sending request to admin, Either the phone number is invalid or the api key is invalid');
         }
+        logger.info(`Request sent to admin with phone number ${phoneNumber}, api key ${apiKey}, and text ${text}, Response from api: ${response.data}`);
         res.json({
             message: 'Request sent to admin'
         });

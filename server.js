@@ -8,6 +8,7 @@ const cors = require('cors');
 const swaggerUI = require('swagger-ui-express');
 const swaggerJsDoc = require('swagger-jsdoc');
 const helmet = require('helmet');
+const logger = require('./configs/logger');
 
 const authRouter = require('./routes/auth');
 const coursesRouter = require('./routes/courses.routes');
@@ -63,9 +64,9 @@ const {
 initDriver(NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD)
 
 // Routes
-app.get('/', passport.authenticate('jwt', {session: false}), async (req, res) => {
-    console.log(req.user);
-    res.send('Hello World!');
+app.get('/', (req, res) => {
+    logger.info('Health check passed')
+    res.send('I am alive!')
 });
 
 app.use('/api/auth', authRouter);
@@ -79,4 +80,6 @@ app.use('/api/contact', contactRouter);
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}, You can access the api documentation at http://localhost:${PORT}/api-docs`));
+app.listen(PORT, () => {
+    logger.info(`Server started on port ${PORT}, You can access the api documentation at http://localhost:${PORT}/api-docs`)
+});

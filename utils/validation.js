@@ -4,8 +4,7 @@ const validateCourseCode = (code) => {
     code = code.toUpperCase();
     const regex = /^[A-Z]{2,4}N[0-9]{3}$/;
     if (!regex.test(code)) {
-        console.log(code);
-        throw new ValidationError('Invalid course code, must be in the format of CMPN123 or PEN123');
+        throw new ValidationError(`Invalid course code : ${code}, must be in the format of CMPN123 or PEN123`);
     }
     return code;
 }

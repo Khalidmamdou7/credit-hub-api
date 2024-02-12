@@ -1,4 +1,5 @@
 const neo4j = require('neo4j-driver');
+const logger = require('./configs/logger');
 
 let driver
 
@@ -8,10 +9,10 @@ const initDriver = (uri, username, password) => {
 
   return driver.verifyConnectivity()
     .then(() => {
-        console.log('Connected to Neo4j')
+        logger.info('Connected to Neo4j')
         return driver
     }).catch((err) => {
-        console.log('Error connecting to Neo4j', err)
+        logger.error('Error connecting to Neo4j', err)
         // throw err
     })
 }
