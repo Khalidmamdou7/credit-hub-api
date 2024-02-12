@@ -3,6 +3,10 @@ const axios = require('axios');
 const { log } = require('winston');
 const logger = require('../configs/logger');
 
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+const { sendEmail } = require('../utils/mail');
+
 
 
 /**
@@ -65,5 +69,68 @@ contactRouter.post('/volunteer', async (req, res, next) => {
     }
 });
 
+/**
+ * @swagger
+ * /api/contact/send-mail:
+ *  post:
+ *      summary: Send an email
+ *      tags:
+ *          - Contact
+ *      requestBody:
+ *          content:
+ *              multipart/form-data:
+ *                  schema:
+ *                      type: object
+ *                      properties:
+ *                          email:
+ *                              type: string
+ *                              description: The email of the recipient
+ *                              required: true
+ *                              format: email
+ *                          subject:
+ *                              type: string
+ *                              description: The subject of the email
+ *                              required: true
+ *                          text:
+ *                              type: string
+ *                              description: The text of the email
+ *                              required: true
+ *                          file:
+ *                              type: string
+ *                              format: binary
+ *                              description: The file to be attached to the email
+ *                              required: false
+ *      responses:
+ *          200:
+ *              description: A message indicating the email has been sent
+ *              content:
+ *                  application/json:
+ *                      schema:
+ *                          type: object
+ *                          properties:
+ *                              message:
+ *                                  type: string
+ *                                  description: The message indicating the email has been sent
+ */
+
+
+contactRouter.post('/send-mail', upload.single('file'), async (req, res, next) => {
+    console.log(req.body);
+    try {
+        const email = req.body.email;
+        const subject = req.body.subject;
+        const text = req.body.text;
+        const file = req.file;
+        if (!email || !subject || !text) {
+            throw new Error('Invalid request, missing one of the required fields');
+        }
+        await sendEmail(email, subject, text, attachedFilePath = file ? file.path: null, attachedFileName = file ? file.originalname: null);
+        res.json({
+            message: 'Email sent'
+        });
+    } catch (error) {
+        next(error)
+    }
+});
 
 module.exports = contactRouter;
