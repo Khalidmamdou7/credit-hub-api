@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    ports:
+      - "${PORT}:${PORT}"   # Expose the port defined in the .env file
+      - "9229:9229"      # Node.js debugger
+    volumes:
+      - ./:/usr/src/app   # Mount the current directory into the container
+      - /usr/src/app/node_modules   # Prevents overwriting node_modules
+    networks:
+      - backend-tier
+    environment:
+      - NODE_ENV=development
+      - NEO4J_URI=bolt://neo4j:7687   # Neo4j URI
+      - NEO4J_USER=neo4j             # Neo4j username
+      - NEO4J_PASSWORD=password         # Neo4j password
+      - PORT=${PORT}               # Port for the backend server
+    depends_on:
+      neo4j:
+        condition: service_healthy
+
+  neo4j:
+    image: neo4j:5-community       # Neo4j version
+    container_name: neo4j
+    ports:
+      - "7474:7474"   # Neo4j web interface (browser)
+      - "7687:7687"   # Neo4j Bolt protocol (database communication)
+    environment:
+      - NEO4J_AUTH=neo4j/password       # Default credentials (username/password)
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "--non-interactive", "RETURN 1;"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    volumes:
+      - neo4j_data:/data   # Persist Neo4j data in a named volume
+      - neo4j_logs:/logs   # Persist logs
+    networks:
+      - backend-tier
+
+volumes:
+  neo4j_data:   # Volume to persist Neo4j database data
+  neo4j_logs:   # Volume to persist Neo4j logs
+
+networks:
+  backend-tier:
+    driver: bridge

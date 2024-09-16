@@ -1,0 +1,41 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: prod.Dockerfile  # Production Dockerfile for your Express app
+    ports:
+      - "3000:3000"  # Maps container port 3000 to host port 3000
+    environment:
+      - NODE_ENV=production
+      - NEO4J_URI=bolt://neo4j:7687  # Neo4j URI pointing to the Neo4j service
+      - NEO4J_USER=neo4j             # Neo4j default user
+      - NEO4J_PASSWORD=password # Neo4j default password (to be set)
+    depends_on:
+      neo4j:
+        condition: service_healthy  # Wait for Neo4j to be healthy before starting the backend
+    volumes:
+      - ./logs:/usr/src/app/logs  # Mount logs folder for persistent logs
+      - ./uploads:/usr/src/app/uploads  # Mount uploads folder for persistent uploads
+      - ./.env:/usr/src/app/.env  # Ensure .env file is available in the container
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:5-community       # Neo4j version
+    container_name: neo4j
+    ports:
+      - "7474:7474"  # HTTP browser access for Neo4j at localhost:7474
+      - "7687:7687"  # Bolt protocol for app connections
+    environment:
+      - NEO4J_AUTH=neo4j/password  # Set Neo4j username and password
+    volumes:
+      - neo4j-data:/data  # Persist Neo4j data across container restarts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "password", "--non-interactive", "RETURN 1;"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  neo4j-data:

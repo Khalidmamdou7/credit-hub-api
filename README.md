@@ -26,7 +26,28 @@ The API documentation can be found [here](https://credithub.onrender.com/api-doc
 
 ## Local Installation
 
-To run the API locally, you need to have Node.js. You can download [Node.js](https://nodejs.org/en/download/). Once you have Node.js installed, you can clone the repository and install the dependencies.
+To run the server locally, you have two options. You can either run the server using [Docker](#using-docker) or run it [directly on your machine](#running-directly-on-your-machine). In both cases, you need to create a `.env` file in the root directory of the project. You can use the `.env.example` file as a template. Once you have the `.env` file created, you can run the server.
+
+### Using Docker
+
+After installing [Docker](https://docs.docker.com/get-docker/), and cloning the repository, you can run the following commands to run the server.
+
+There are two modes for running the server using Docker. You can run the server in production mode or development mode. To run the server in dev mode, you can run the following command.
+
+```bash
+docker compose -f docker-compose.dev.yml up --build
+```
+
+To run the server in production mode, you can run the following command.
+
+```bash
+docker compose -f docker-compose.prod.yml up --build
+```
+
+
+### Running Directly on Your Machine
+
+You need to have Node.js. You can download [Node.js](https://nodejs.org/en/download/). Once you have Node.js installed, you can clone the repository and install the dependencies.
 
 ```bash
 git clone
